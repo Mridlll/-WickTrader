@@ -215,8 +215,24 @@ class WickTraderBot:
             "trades_lost": 0,
             "total_pnl": 0.0,
             "start_time": None,
-            "last_update": None
+            "last_update": None,
+            "last_heartbeat": None,
+            "missed_signals_checked": False
         }
+
+        # Discord notifier (optional)
+        self.discord = None
+        try:
+            from notifications.discord import DiscordNotifier
+            self.discord = DiscordNotifier()
+            if self.discord.webhook_url:
+                logger.info("Discord notifications enabled")
+        except Exception:
+            pass  # Discord not configured
+
+        # Heartbeat for watchdog monitoring
+        self._heartbeat_file = Path("data/heartbeat.txt")
+        self._last_heartbeat = datetime.now()
 
         logger.info(f"WickTraderBot initialized")
         logger.info(f"  Symbol: {config.symbol}")
@@ -258,10 +274,16 @@ class WickTraderBot:
             # Load recent candle history
             await self._load_candle_history()
 
+            # Check for missed signals (if bot was down during a signal)
+            await self._check_missed_signals()
+
             self.stats["start_time"] = datetime.now()
             self.state = BotState.MONITORING
 
             logger.info("Bot started - monitoring for signals...")
+
+            # Send startup notification
+            await self._notify_startup(balance.total_balance)
 
             # Main loop
             await self._run_loop()
@@ -315,6 +337,9 @@ class WickTraderBot:
 
                 last_candle_time = candle_time
                 self.stats["last_update"] = datetime.now()
+
+                # Update heartbeat for watchdog
+                self._update_heartbeat()
 
                 # Wait before next check
                 await asyncio.sleep(self.config.check_interval_seconds)
@@ -372,6 +397,125 @@ class WickTraderBot:
 
             self.state = BotState.IN_POSITION
             logger.info("Resuming with existing position")
+
+    async def _check_missed_signals(self) -> None:
+        """Check last few candles for any missed signals (bot was down)."""
+        if self.active_trade:
+            return  # Already in a position
+
+        logger.info("Checking for missed signals...")
+
+        # Check last 3 closed candles for signals we might have missed
+        recent_candles = self.candle_history[-4:-1]  # Last 3 closed (not current)
+
+        for i, candle in enumerate(recent_candles):
+            signal = self.signal_detector.process_bar(
+                timestamp=candle["timestamp"],
+                open_price=candle["open"],
+                high=candle["high"],
+                low=candle["low"],
+                close=candle["close"],
+                threshold=self.config.wick_threshold
+            )
+
+            if signal:
+                hours_ago = (len(recent_candles) - i) * 4
+                logger.warning(f"MISSED SIGNAL DETECTED from {hours_ago}h ago!")
+                logger.warning(f"  Type: {signal.type.value}")
+                logger.warning(f"  Wick: {signal.wick_percent:.2f}%")
+                logger.warning(f"  Entry would have been: ${signal.entry_price:.2f}")
+
+                # Notify about missed signal
+                if self.discord:
+                    await self.discord.send_message(
+                        title="Missed Signal Alert",
+                        message=f"Bot was down during a {signal.wick_percent:.1f}% wick signal {hours_ago}h ago.\n"
+                                f"Entry would have been ${signal.entry_price:.2f}.\n"
+                                f"Bot is now online and monitoring.",
+                        color=0xFFA500  # Orange
+                    )
+
+        self.stats["missed_signals_checked"] = True
+        logger.info("Missed signal check complete")
+
+    async def _notify_startup(self, balance: float) -> None:
+        """Send startup notification."""
+        if self.discord:
+            await self.discord.send_message(
+                title="WickTrader Bot Started",
+                message=f"**Strategy:** {self.config.risk_profile}\n"
+                        f"**Wick Threshold:** {self.config.wick_threshold}%\n"
+                        f"**Balance:** ${balance:,.2f}\n"
+                        f"**Mode:** {'Paper' if self.config.paper_trade else 'LIVE'}\n"
+                        f"Monitoring SOL/USDT 4H for signals...",
+                color=0x00FF00  # Green
+            )
+
+    async def _notify_signal(self, signal, action: str = "detected") -> None:
+        """Send signal notification."""
+        if self.discord:
+            color = 0x00FF00 if action == "executed" else 0x0099FF
+            await self.discord.send_message(
+                title=f"Wick Signal {action.title()}",
+                message=f"**Type:** {signal.type.value.upper()}\n"
+                        f"**Wick:** {signal.wick_percent:.2f}%\n"
+                        f"**Entry:** ${signal.entry_price:.2f}\n"
+                        f"**Stop Loss:** ${signal.stop_loss:.2f}",
+                color=color
+            )
+
+    async def _notify_error(self, error: str) -> None:
+        """Send error notification."""
+        if self.discord:
+            await self.discord.send_message(
+                title="Bot Error",
+                message=f"**Error:** {error}\n\nBot will attempt to continue.",
+                color=0xFF0000  # Red
+            )
+
+    def _get_next_candle_close(self) -> datetime:
+        """Calculate when the next 4H candle closes."""
+        now = datetime.utcnow()
+
+        # 4H candles close at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+        current_hour = now.hour
+        next_close_hour = ((current_hour // 4) + 1) * 4
+
+        if next_close_hour >= 24:
+            next_close_hour = 0
+            next_close = now.replace(hour=0, minute=0, second=5, microsecond=0) + timedelta(days=1)
+        else:
+            next_close = now.replace(hour=next_close_hour, minute=0, second=5, microsecond=0)
+
+        return next_close
+
+    def _seconds_until_candle_close(self) -> int:
+        """Get seconds until next candle close."""
+        next_close = self._get_next_candle_close()
+        delta = (next_close - datetime.utcnow()).total_seconds()
+        return max(5, int(delta))  # Minimum 5 seconds
+
+    def _update_heartbeat(self) -> None:
+        """Update heartbeat file for watchdog monitoring."""
+        try:
+            self._heartbeat_file.parent.mkdir(parents=True, exist_ok=True)
+            now = datetime.now()
+            self._last_heartbeat = now
+
+            # Calculate time until next 4H candle
+            next_candle = self._get_next_candle_close()
+            time_until = (next_candle - datetime.utcnow()).total_seconds()
+
+            self._heartbeat_file.write_text(
+                f"{now.isoformat()}\n"
+                f"state={self.state.value}\n"
+                f"signals={self.stats['signals_detected']}\n"
+                f"trades={self.stats['trades_taken']}\n"
+                f"next_candle_in={int(time_until)}s\n"
+            )
+            self.stats["last_heartbeat"] = now
+        except Exception as e:
+            logger.warning(f"Failed to update heartbeat: {e}")
 
     async def _process_closed_candle(self, candle) -> None:
         """Process a newly closed candle."""
