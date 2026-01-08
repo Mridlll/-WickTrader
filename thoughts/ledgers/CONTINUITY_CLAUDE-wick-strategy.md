@@ -195,25 +195,27 @@ https://github.com/Mridlll/-WickTrader
 ## LIVE TRADING BOT (Added 2026-01-08)
 
 **Files Created:**
-- `bot/wick_bot.py` - Main trading bot class
+- `bot/wick_bot.py` - Main trading bot class (Binance)
+- `bot/multi_exchange_bot.py` - Multi-exchange with failover
 - `bot/run_bot.py` - Entry point with CLI
-- `config/bot.yaml` - Bot configuration
+- `setup_wizard.py` - Interactive setup wizard
 
-**Usage:**
+**Quick Start:**
 ```bash
-# Paper trading (safe)
-python -m bot.run_bot --paper --profile moderate
+# Run setup wizard (recommended)
+python setup_wizard.py
 
-# Live trading (REAL MONEY)
-python -m bot.run_bot --live --profile conservative
+# Or run directly
+python -m bot.run_bot --paper --profile moderate
 ```
 
 **Features:**
-- Real-time 4H candle monitoring
+- Multi-exchange support (Binance + Hyperliquid)
+- Automatic failover between exchanges
+- Interactive setup wizard (like VMC)
 - Heat-based position sizing
-- Multiple exit strategies (fixed TP, R:R, time-based, trailing)
-- Paper trading mode for testing
-- Automatic position management
+- Multiple exit strategies
+- Paper trading mode
 
 ## DEGEN MODE AUDIT (2026-01-08)
 
