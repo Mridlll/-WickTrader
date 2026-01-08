@@ -145,8 +145,9 @@ D:\Crypto Bot\WickTrader\
   - [x] **Discord notifications system**
   - [x] **Comprehensive audit and testing (38/38 tests passed)**
   - [x] **Fixed critical issues from audit**
-- Now: [→] Ready for paper trading
-- Next: Deploy to production
+  - [x] **Curated strategy presets (backtest-winner, safe, aggressive, degen)**
+- Now: [→] Paper trading on Binance Demo
+- Next: Deploy to client
 
 ## GitHub
 https://github.com/Mridlll/-WickTrader
@@ -202,25 +203,38 @@ https://github.com/Mridlll/-WickTrader
 **Files Created:**
 - `bot/wick_bot.py` - Main trading bot class (Binance)
 - `bot/multi_exchange_bot.py` - Multi-exchange with failover
-- `bot/run_bot.py` - Entry point with CLI
+- `bot/run_bot.py` - Entry point with CLI + strategy presets
 - `setup_wizard.py` - Interactive setup wizard
 
 **Quick Start:**
 ```bash
-# Run setup wizard (recommended)
-python setup_wizard.py
+# View available strategy presets
+python -m bot.run_bot --strategies
 
-# Or run directly
-python -m bot.run_bot --paper --profile moderate
+# Run with a tested strategy preset (recommended)
+python -m bot.run_bot --strategy backtest-winner  # Best Sharpe
+python -m bot.run_bot --strategy safe             # Conservative
+python -m bot.run_bot --strategy aggressive       # High returns
+python -m bot.run_bot --strategy degen            # Max risk
 ```
 
 **Features:**
 - Multi-exchange support (Binance + Hyperliquid)
 - Automatic failover between exchanges
+- **Curated strategy presets based on 480-variant backtest**
 - Interactive setup wizard (like VMC)
 - Heat-based position sizing
 - Multiple exit strategies
 - Paper trading mode
+
+## STRATEGY PRESETS (Added 2026-01-09)
+
+| Preset | Return | Max DD | Sharpe | Config |
+|--------|--------|--------|--------|--------|
+| `backtest-winner` | +211% | 14.9% | 1.289 | 7% wick, 12% TP, conservative |
+| `safe` | +150% | 8.6% | 1.001 | 6% wick, R:R 2:1, conservative |
+| `aggressive` | +717% | 31.6% | 1.093 | 6% wick, 40 bars, aggressive |
+| `degen` | +1,919% | 40.7% | 1.224 | 7% wick, R:R 3:1, degen |
 
 ## DEGEN MODE AUDIT (2026-01-08)
 
@@ -273,6 +287,8 @@ Consecutive wins at high balances create exponential growth.
 ## COMMITS THIS SESSION
 | Commit | Description |
 |--------|-------------|
+| `604858b` | feat: Add curated strategy presets based on backtest results |
+| `e591e2f` | feat: Add Discord notifications, fix critical audit issues, comprehensive testing |
 | `878624d` | docs: Add architecture diagrams, Degen mode audit, improved README |
 | `cd40a7d` | feat: Add heat-based risk management, cross-margin engine, comprehensive backtest |
 | `a41cc42` | docs: Fix clone URL and comprehensive testing documentation |

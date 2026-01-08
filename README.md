@@ -8,6 +8,63 @@
 
 ---
 
+## Quick Start (5 Minutes)
+
+### 1. Install
+
+```bash
+git clone https://github.com/Mridlll/-WickTrader.git
+cd WickTrader
+pip install -r requirements.txt
+```
+
+### 2. Configure API Keys
+
+Edit `config/binance_testnet.yaml`:
+```yaml
+exchange:
+  name: "binance"
+  testnet: true
+  base_url: "https://demo-fapi.binance.com"
+  api_key: "YOUR_API_KEY"
+  api_secret: "YOUR_API_SECRET"
+```
+
+Get demo keys from: https://www.binance.com/en/futures (Demo Trading)
+
+### 3. Run the Bot
+
+```bash
+# View available strategies
+python -m bot.run_bot --strategies
+
+# Run with recommended strategy (paper trading - safe)
+python -m bot.run_bot --strategy backtest-winner
+```
+
+---
+
+## Strategy Presets
+
+Choose a pre-configured strategy based on our 480-variant backtest:
+
+| Strategy | Command | Return | Max DD | Risk Level |
+|----------|---------|--------|--------|------------|
+| **Best Sharpe** | `--strategy backtest-winner` | +211% | 14.9% | Low |
+| **Safe** | `--strategy safe` | +150% | 8.6% | Very Low |
+| **Aggressive** | `--strategy aggressive` | +717% | 31.6% | High |
+| **Degen** | `--strategy degen` | +1,919% | 40.7% | Extreme |
+
+```bash
+# Examples
+python -m bot.run_bot --strategy safe              # Conservative
+python -m bot.run_bot --strategy backtest-winner   # Recommended
+python -m bot.run_bot --strategy aggressive        # Higher risk
+python -m bot.run_bot --strategy degen             # Maximum risk
+```
+
+---
+
 ## Performance Summary
 
 **Data**: Real Binance SOL/USDT 4H candles | **Period**: 12 months | **Variants**: 480 tested
@@ -140,15 +197,38 @@ Expected DD        15%           25%            35%           55%
 
 ---
 
-## Quick Start
+## Live Trading Bot
 
-### Installation
+### Paper Trading (Safe - No Real Money)
 
 ```bash
-git clone https://github.com/Mridlll/-WickTrader.git
-cd WickTrader
-pip install -r requirements.txt
+# Run with any strategy preset
+python -m bot.run_bot --strategy backtest-winner
+
+# Or run setup wizard for interactive configuration
+python setup_wizard.py
 ```
+
+### Live Trading (Real Money)
+
+```bash
+# Requires mainnet API keys and confirmation
+python -m bot.run_bot --strategy safe --live --mainnet
+# You will be asked to type "I UNDERSTAND" to confirm
+```
+
+### Bot Features
+
+- Multi-exchange support (Binance + Hyperliquid)
+- Automatic failover between exchanges
+- Heat-based position sizing
+- Multiple exit strategies
+- Discord notifications (optional)
+- Paper trading mode for testing
+
+---
+
+## Backtesting
 
 ### Run Full Analysis
 
