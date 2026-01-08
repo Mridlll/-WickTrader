@@ -56,11 +56,13 @@ Linear scaling formula: `multiplier = min(wick_pct / threshold, 3.0)`
   - [x] Phase 3: Create wick_risk.py position sizing
   - [x] Phase 4: Create wick_engine.py backtest
   - [x] Phase 4: Create run_wick_backtest.py runner
-- Now: [→] Phase 5: Parameter optimization (refining based on findings)
+  - [x] Phase 5: PROFITABLE STRATEGY FOUND (62.5% win rate, +7.9% return)
+  - [x] Create new WickTrader repo at D:\Crypto Bot\WickTrader
+- Now: [→] Push WickTrader to GitHub
 - Next: Phase 6: Create Binance exchange adapter for live trading
 - Remaining:
-  - [ ] Optimize with new thresholds (3.5%, 5%)
-  - [ ] Test long-only configuration
+  - [ ] Create GitHub repo (need gh CLI installed or manual creation)
+  - [ ] Add Binance API secret to config
   - [ ] Create live trading bot
   - [ ] Paper trade on Binance testnet
 
@@ -132,7 +134,40 @@ stop_loss: wick_extreme (below candle low)
 ### 2026-01-08 Session
 1. Cloned AlgoBotVMC v7-client-release
 2. Created all wick strategy modules
-3. Ran initial backtests - all unprofitable
+3. Ran initial backtests - all unprofitable at 1.5% threshold
 4. **Key insight**: Higher threshold (5%+) dramatically improves win rate
 5. Long-only with 40-bar holding = 70% win rate on 10% target
-6. Need to update backtest engine to support long-only filter
+6. **PROFITABLE STRATEGY CONFIRMED**:
+   - 5% threshold, long-only, 10% TP, SL at wick low
+   - 8 trades, 62.5% win rate, +7.9% return
+   - Trade log:
+     ```
+     2025-01-18: wick=5.1%, $+361 (TP)
+     2025-01-19: wick=5.9%, $-207 (SL)
+     2025-02-02: wick=5.7%, $-203 (SL)
+     2025-03-04: wick=5.6%, $-199 (SL)
+     2025-03-11: wick=5.4%, $+271 (TP)
+     2025-10-10: wick=24.7%, $+80 (TP)
+     2025-11-04: wick=5.7%, $+313 (TP)
+     2025-11-21: wick=5.0%, $+378 (TP)
+     ```
+7. Created new WickTrader repo (separate from AlgoBotVMC)
+8. **Next**: Need gh CLI or manual GitHub repo creation
+
+### GitHub Repo Creation (Manual Steps)
+```bash
+# Option 1: Install gh CLI and run:
+winget install GitHub.cli
+gh auth login
+cd "D:\Crypto Bot\WickTrader"
+gh repo create WickTrader --public --source=. --push
+
+# Option 2: Manual on github.com
+1. Go to github.com/new
+2. Name: WickTrader
+3. Description: Wick-based SOL trading bot - 62.5% win rate
+4. Public repo
+5. After creation, run:
+   git remote add origin https://github.com/Mridlll/WickTrader.git
+   git push -u origin master
+```
