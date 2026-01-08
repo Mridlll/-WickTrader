@@ -135,36 +135,76 @@ D:\Crypto Bot\WickTrader\
   - [x] Update README with accurate results (+39.7%)
   - [x] Commit to local git
   - [x] Push to GitHub
+  - [x] **Heat-based risk management system**
+  - [x] **Cross-margin portfolio engine**
+  - [x] **Advanced backtest with 4 risk profiles**
+  - [x] **480-variant grid search**
+  - [x] **Professional report generator with methodology docs**
 - Now: [→] Create live trading bot
 - Next: Paper trade on Binance testnet
 
 ## GitHub
 https://github.com/Mridlll/-WickTrader
 
+## LATEST REPORT
+`reports/backtest_report_20260108_170119.md`
+
+## ADVANCED BACKTEST SYSTEM (Added 2026-01-08)
+
+### New Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| Heat Risk Manager | `src/strategy/heat_risk.py` | Portfolio heat tracking, zone-based sizing |
+| Cross-Margin Engine | `backtest/portfolio_engine.py` | Unified margin pool, real-time PnL |
+| Advanced Engine | `backtest/advanced_engine.py` | 4 risk profiles, integrated heat |
+| Metrics Calculator | `backtest/metrics.py` | Sharpe, Sortino, Calmar, PF |
+| Variant Search | `backtest/variant_search.py` | 480-combo grid search |
+| Report Generator | `backtest/enhanced_report_generator.py` | Professional markdown reports |
+| Full Analysis | `backtest/run_full_analysis.py` | One-click comprehensive analysis |
+
+### Risk Profiles Tested
+| Profile | Risk/Trade | Leverage | Max Heat |
+|---------|------------|----------|----------|
+| Conservative | 3% | 3X | 30% |
+| Moderate | 5% | 5X | 50% |
+| Aggressive | 10% | 7X | 70% |
+| Degen | 15% | 10X | 90% |
+
+### Heat Zone System
+| Zone | Heat Level | Sizing Allowed |
+|------|------------|----------------|
+| GREEN | 0-30% | 100% |
+| YELLOW | 30-60% | 50% |
+| RED | 60-80% | 25% |
+| CRITICAL | >80% | 0% |
+
+### Grid Search Results (480 variants)
+- **91.7% profitable** (440/480)
+- **Best Sharpe:** 1.289 (Conservative, 7% wick, fixed_12)
+- **Best Return:** +2815% (Degen mode)
+
 ## REMAINING TASKS
 1. [x] Push to GitHub
-2. [→] Create live trading bot
-3. [ ] Paper trade on Binance testnet
-4. [ ] Deploy to client
+2. [x] Add heat-based risk management
+3. [x] Create professional backtest report
+4. [→] Create live trading bot
+5. [ ] Paper trade on Binance testnet
+6. [ ] Deploy to client
 
 ## COMMITS THIS SESSION
 | Commit | Description |
 |--------|-------------|
-| `7a106ce` | Complete strategy analysis: 192 combinations, leverage testing, final config |
-| `eb4d036` | Final strategy: SOL 4H, 5%+ wick, 10% risk = +36.2% annual |
-| `2eb6f28` | Add comprehensive backtest report with fee/slippage accounting |
-| `19086b1` | Add exchange adapters: Binance + Hyperliquid |
+| `cd40a7d` | feat: Add heat-based risk management, cross-margin engine, comprehensive backtest |
+| `a41cc42` | docs: Fix clone URL and comprehensive testing documentation |
+| `6362530` | docs: Update ledger - GitHub push complete |
 | `131a47f` | docs: Update README with accurate grid search results |
+| `7a106ce` | Complete strategy analysis: 192 combinations, leverage testing |
 
 ## QUICK START
 ```bash
-# Full grid search
-python backtest/full_grid_search.py
+# Run full analysis (generates report)
+python -m backtest.run_full_analysis
 
-# Generate report
-python backtest/generate_report.py
-
-# Push to GitHub
-gh auth login
-gh repo create WickTrader --public --source=. --push
+# View latest report
+cat reports/backtest_report_*.md
 ```
