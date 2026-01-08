@@ -134,12 +134,16 @@ D:\Crypto Bot\WickTrader\
   - [x] Test leverage scenarios (2X-10X)
   - [x] Update README with accurate results (+39.7%)
   - [x] Commit to local git
-- Now: [→] Push to GitHub (create repo first)
-- Next: Create live trading bot
+  - [x] Push to GitHub
+- Now: [→] Create live trading bot
+- Next: Paper trade on Binance testnet
+
+## GitHub
+https://github.com/Mridlll/-WickTrader
 
 ## REMAINING TASKS
-1. [→] Create WickTrader repo on GitHub, then `git push -u origin master`
-2. [ ] Create live trading bot
+1. [x] Push to GitHub
+2. [→] Create live trading bot
 3. [ ] Paper trade on Binance testnet
 4. [ ] Deploy to client
 
