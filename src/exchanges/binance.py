@@ -29,7 +29,7 @@ class BinanceExchange(BaseExchange):
     """Binance Futures exchange implementation."""
 
     # Base URLs
-    TESTNET_URL = "https://testnet.binancefuture.com"
+    TESTNET_URL = "https://demo-fapi.binance.com"  # Binance demo trading
     MAINNET_URL = "https://fapi.binance.com"
 
     # Timeframe mapping

@@ -72,7 +72,7 @@ class BotConfig:
 
     @classmethod
     def from_yaml(cls, path: str) -> "BotConfig":
-        """Load config from YAML file."""
+        """Load config from YAML file with validation."""
         with open(path, 'r') as f:
             data = yaml.safe_load(f)
 
@@ -95,7 +95,44 @@ class BotConfig:
             config.paper_trade = data['bot'].get('paper_trade', config.paper_trade)
             config.check_interval_seconds = data['bot'].get('check_interval', config.check_interval_seconds)
 
+        # Validate configuration
+        config.validate()
+
         return config
+
+    def validate(self) -> None:
+        """Validate configuration parameters."""
+        # Validate wick threshold (1.5% - 10%)
+        if not 1.5 <= self.wick_threshold <= 10.0:
+            raise ValueError(f"wick_threshold must be between 1.5 and 10.0, got {self.wick_threshold}")
+
+        # Validate risk profile
+        valid_profiles = ["conservative", "moderate", "aggressive", "degen"]
+        if self.risk_profile not in valid_profiles:
+            raise ValueError(f"risk_profile must be one of {valid_profiles}, got '{self.risk_profile}'")
+
+        # Validate exit type
+        valid_exits = ["fixed_tp", "rr_ratio", "time_based", "trailing"]
+        if self.exit_type not in valid_exits:
+            raise ValueError(f"exit_type must be one of {valid_exits}, got '{self.exit_type}'")
+
+        # Validate direction
+        valid_directions = ["long", "short", "both"]
+        if self.direction not in valid_directions:
+            raise ValueError(f"direction must be one of {valid_directions}, got '{self.direction}'")
+
+        # Validate numeric ranges
+        if self.fixed_tp_pct <= 0 or self.fixed_tp_pct > 50:
+            raise ValueError(f"fixed_tp_pct must be between 0 and 50, got {self.fixed_tp_pct}")
+
+        if self.rr_ratio <= 0 or self.rr_ratio > 10:
+            raise ValueError(f"rr_ratio must be between 0 and 10, got {self.rr_ratio}")
+
+        if self.time_exit_bars <= 0 or self.time_exit_bars > 100:
+            raise ValueError(f"time_exit_bars must be between 1 and 100, got {self.time_exit_bars}")
+
+        if self.check_interval_seconds < 10:
+            raise ValueError(f"check_interval_seconds must be at least 10, got {self.check_interval_seconds}")
 
 
 @dataclass
@@ -479,6 +516,20 @@ class WickTraderBot:
                 lowest_price=signal.entry_price
             )
 
+            # Track position in heat manager
+            risk_amount = abs(signal.entry_price - stop_loss) * size
+            position_heat = PositionHeat(
+                symbol=self.config.symbol,
+                side="long" if is_long else "short",
+                size=size,
+                entry_price=signal.entry_price,
+                stop_loss=stop_loss,
+                risk_amount=risk_amount,
+                heat_contribution=(risk_amount / balance.total_balance) * 100 if balance.total_balance > 0 else 0
+            )
+            self.risk_manager.add_position(position_heat)
+            logger.debug(f"Added position to heat tracker: {risk_amount:.2f} risk, {position_heat.heat_contribution:.1f}% heat")
+
             self.state = BotState.IN_POSITION
             self.stats["trades_taken"] += 1
             self.last_signal_bar = self.current_bar_idx
@@ -499,18 +550,33 @@ class WickTraderBot:
 
                 logger.info(f"Order placed: {order.order_id}")
 
+                actual_entry = order.avg_fill_price or signal.entry_price
                 self.active_trade = ActiveTrade(
                     symbol=self.config.symbol,
                     side=signal.signal_type,
-                    entry_price=order.avg_fill_price or signal.entry_price,
+                    entry_price=actual_entry,
                     entry_time=datetime.now(),
                     size=size,
                     stop_loss=stop_loss,
                     take_profit=take_profit,
                     entry_bar_idx=self.current_bar_idx,
-                    highest_price=signal.entry_price,
-                    lowest_price=signal.entry_price
+                    highest_price=actual_entry,
+                    lowest_price=actual_entry
                 )
+
+                # Track position in heat manager
+                risk_amount = abs(actual_entry - stop_loss) * size
+                position_heat = PositionHeat(
+                    symbol=self.config.symbol,
+                    side="long" if is_long else "short",
+                    size=size,
+                    entry_price=actual_entry,
+                    stop_loss=stop_loss,
+                    risk_amount=risk_amount,
+                    heat_contribution=(risk_amount / balance.total_balance) * 100 if balance.total_balance > 0 else 0
+                )
+                self.risk_manager.add_position(position_heat)
+                logger.debug(f"Added position to heat tracker: {risk_amount:.2f} risk, {position_heat.heat_contribution:.1f}% heat")
 
                 self.state = BotState.IN_POSITION
                 self.stats["trades_taken"] += 1
@@ -661,6 +727,10 @@ class WickTraderBot:
             self.stats["trades_lost"] += 1
 
         self.stats["total_pnl"] += pnl
+
+        # Remove position from heat tracker
+        self.risk_manager.remove_position(self.config.symbol)
+        logger.debug(f"Removed position from heat tracker: {self.config.symbol}")
 
         # Clear active trade
         self.active_trade = None

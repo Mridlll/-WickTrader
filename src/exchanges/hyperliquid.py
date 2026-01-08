@@ -371,6 +371,10 @@ class HyperliquidExchange(BaseExchange):
             size = self._round_size(size, sz_decimals)
             logger.info(f"Order size rounded to {sz_decimals} decimals: {size}")
 
+            # Check if size rounded to zero
+            if size <= 0:
+                raise ValueError(f"Order size rounded to zero after precision adjustment (sz_decimals={sz_decimals}). Original size too small.")
+
             # Check minimum notional value ($10 on Hyperliquid)
             notional = size * price
             MIN_NOTIONAL = 11.0  # $11 minimum to be safe
