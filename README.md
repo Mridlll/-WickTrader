@@ -88,7 +88,7 @@ Date       | Wick% | Result | PnL       | Notes
 
 \`\`\`bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/WickTrader.git
+git clone https://github.com/Mridlll/-WickTrader.git
 cd WickTrader
 
 # Install dependencies
