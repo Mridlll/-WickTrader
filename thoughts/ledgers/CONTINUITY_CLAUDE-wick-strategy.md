@@ -188,9 +188,32 @@ https://github.com/Mridlll/-WickTrader
 2. [x] Add heat-based risk management
 3. [x] Create professional backtest report
 4. [x] **Degen Mode Audit** - audited +1920% return claim
-5. [→] Create live trading bot
-6. [ ] Paper trade on Binance testnet
+5. [x] Create live trading bot
+6. [→] Paper trade on Binance testnet
 7. [ ] Deploy to client
+
+## LIVE TRADING BOT (Added 2026-01-08)
+
+**Files Created:**
+- `bot/wick_bot.py` - Main trading bot class
+- `bot/run_bot.py` - Entry point with CLI
+- `config/bot.yaml` - Bot configuration
+
+**Usage:**
+```bash
+# Paper trading (safe)
+python -m bot.run_bot --paper --profile moderate
+
+# Live trading (REAL MONEY)
+python -m bot.run_bot --live --profile conservative
+```
+
+**Features:**
+- Real-time 4H candle monitoring
+- Heat-based position sizing
+- Multiple exit strategies (fixed TP, R:R, time-based, trailing)
+- Paper trading mode for testing
+- Automatic position management
 
 ## DEGEN MODE AUDIT (2026-01-08)
 
@@ -217,6 +240,7 @@ Consecutive wins at high balances create exponential growth.
 ## COMMITS THIS SESSION
 | Commit | Description |
 |--------|-------------|
+| `878624d` | docs: Add architecture diagrams, Degen mode audit, improved README |
 | `cd40a7d` | feat: Add heat-based risk management, cross-margin engine, comprehensive backtest |
 | `a41cc42` | docs: Fix clone URL and comprehensive testing documentation |
 | `6362530` | docs: Update ledger - GitHub push complete |
