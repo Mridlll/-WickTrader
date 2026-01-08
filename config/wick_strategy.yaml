@@ -1,0 +1,178 @@
+# ============================================================================
+# Wick-Based Trading Strategy Configuration
+# ============================================================================
+# Strategy: Trade rejection candles based on wick analysis
+# - Long lower wick = buyers rejected lower prices (bullish)
+# - Long upper wick = sellers rejected higher prices (bearish)
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Wick Signal Detection
+# ----------------------------------------------------------------------------
+wick:
+  # Minimum wick percentage to trigger a signal
+  # Formula: (wick_length / close_price) * 100
+  threshold: 1.5                    # Options: 1.5, 2.0, 2.5, 3.0
+
+  # Require body to confirm signal direction
+  # If true: long signals need close > open, short signals need close < open
+  require_body_confirmation: false
+
+  # Minimum candle range to filter out doji candles
+  min_candle_range_pct: 0.0         # 0 = disabled
+
+  # Maximum wick multiplier for position scaling
+  # Position size = base_size * min(wick_pct / threshold, max_multiplier)
+  max_position_multiplier: 2.0
+
+# ----------------------------------------------------------------------------
+# Risk Management
+# ----------------------------------------------------------------------------
+risk:
+  # Risk per trade as percentage of account balance
+  risk_percent: 3.0
+
+  # Leverage multiplier (3x recommended for wick strategy)
+  leverage: 3.0
+
+  # Stop loss placement
+  stop_loss:
+    # Use wick extreme for stop loss
+    # LONG: stop below candle low (where buyers stepped in)
+    # SHORT: stop above candle high (where sellers stepped in)
+    use_wick_stop_loss: true
+
+    # Buffer beyond wick extreme (percentage)
+    buffer_pct: 0.1
+
+# ----------------------------------------------------------------------------
+# Exit Strategies
+# ----------------------------------------------------------------------------
+# Available strategies:
+#   fixed_10, fixed_15, fixed_20 - Fixed percentage targets
+#   scaled - 33% at 10%, 33% at 15%, 34% at 20%
+#   rr_2, rr_3, rr_4 - Risk:Reward based
+#   trailing - Trail after activation
+#   opposite_signal - Exit on opposite wick signal
+#   time_based - Exit after N bars
+# ----------------------------------------------------------------------------
+exit:
+  strategy: "rr_2"                  # Default: 2:1 risk:reward
+
+  # Fixed percentage targets (for fixed_10, fixed_15, fixed_20)
+  fixed_targets:
+    - 10.0
+    - 15.0
+    - 20.0
+
+  # Scaled exit targets (for scaled strategy)
+  # Format: [percentage_to_exit, target_percentage]
+  scaled_targets:
+    - [0.33, 10.0]                  # Exit 33% at 10% profit
+    - [0.33, 15.0]                  # Exit 33% at 15% profit
+    - [0.34, 20.0]                  # Exit remaining 34% at 20% profit
+
+  # Trailing stop settings (for trailing strategy)
+  trailing:
+    activation_pct: 10.0            # Activate after 10% profit
+    distance_pct: 5.0               # Trail 5% behind price
+
+  # Time-based exit (for time_based strategy)
+  time_based:
+    bars: 10                        # Exit after 10 bars
+
+# ----------------------------------------------------------------------------
+# Signal Filters
+# ----------------------------------------------------------------------------
+# Available filters:
+#   none - No filtering
+#   volume - Volume > 20-day SMA
+#   trend - Price vs 50 EMA (long only above, short only below)
+#   combined - Both volume and trend
+# ----------------------------------------------------------------------------
+filter:
+  type: "none"                      # Default: no filtering
+
+  # Volume filter settings
+  volume:
+    sma_period: 20
+
+  # Trend filter settings
+  trend:
+    ema_period: 50
+
+# ----------------------------------------------------------------------------
+# Backtest Settings
+# ----------------------------------------------------------------------------
+backtest:
+  initial_balance: 10000.0
+  commission_percent: 0.06
+
+  # Data source
+  data:
+    symbol: "SOL"
+    timeframe: "4h"
+    file: "data/binance_cache_1year/sol_4h.csv"
+
+# ----------------------------------------------------------------------------
+# Grid Search Parameters
+# ----------------------------------------------------------------------------
+# Used by run_wick_backtest.py for parameter optimization
+# ----------------------------------------------------------------------------
+grid_search:
+  thresholds:
+    - 1.5
+    - 2.0
+    - 2.5
+    - 3.0
+
+  exit_strategies:
+    - "fixed_10"
+    - "fixed_15"
+    - "fixed_20"
+    - "scaled"
+    - "rr_2"
+    - "rr_3"
+    - "rr_4"
+    - "trailing"
+    - "opposite_signal"
+    - "time_based"
+
+  filters:
+    - "none"
+    - "volume"
+    - "trend"
+    - "combined"
+
+# ============================================================================
+# RECOMMENDED CONFIGURATIONS
+# ============================================================================
+#
+# Conservative:
+#   wick.threshold: 2.5
+#   risk.risk_percent: 2.0
+#   risk.leverage: 2.0
+#   exit.strategy: "rr_2"
+#   filter.type: "trend"
+#
+# Balanced (Default):
+#   wick.threshold: 2.0
+#   risk.risk_percent: 3.0
+#   risk.leverage: 3.0
+#   exit.strategy: "rr_2"
+#   filter.type: "none"
+#
+# Aggressive:
+#   wick.threshold: 1.5
+#   risk.risk_percent: 3.0
+#   risk.leverage: 3.0
+#   exit.strategy: "rr_3"
+#   filter.type: "none"
+#
+# Scalping:
+#   wick.threshold: 1.5
+#   risk.risk_percent: 2.0
+#   exit.strategy: "fixed_10"
+#   filter.type: "volume"
+#
+# ============================================================================

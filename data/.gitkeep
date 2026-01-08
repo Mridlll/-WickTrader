@@ -1,0 +1,2 @@
+# Data directory - CSV files are gitignored
+# Download data using: python scripts/fetch_data.py

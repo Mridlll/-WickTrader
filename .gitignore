@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Config with secrets
+config/*.yaml
+!config/wick_strategy.yaml
+
+# Data (large files)
+data/**/*.csv
+!data/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
+.pytest_cache/
+.coverage
