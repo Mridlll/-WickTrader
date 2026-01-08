@@ -33,18 +33,20 @@ Variant                           | Trades | Win%  |     PnL  |   PnL% |    PF |
 6.0% threshold, 10% TP            |      2 | 100%  |   +$233  |  +2.3% |233.02 |   4.36 |  0.0%
 ```
 
-### Best Strategy: 5.0% threshold, 10% TP
+### FINAL RECOMMENDED: 5.0% threshold, 10% TP, **10% RISK**
 ```
 Initial Balance:     $10,000
-Final Balance:       $10,746
-Net P&L:             +$746 (+7.46%)
-Sharpe Ratio:        1.08
-Profit Factor:       2.20
-Max Drawdown:        6.0%
+Final Balance:       $13,620
+Net P&L:             +$3,620 (+36.2%)
+Max Drawdown:        27.6%
 Win Rate:            62.5% (5/8)
-Avg Win:             +$273
-Avg Loss:            -$207
+Trades/Year:         8
+Risk per Trade:      10%
 ```
+
+**Why 10% risk?** With only 8 trades/year and 62.5% edge, 2% risk = only +7.5% return (not worth it).
+
+**1H timeframe tested - FAILED** (40% win rate, -16% return). Stick with 4H only.
 
 ### Trade Log (5% threshold)
 ```
