@@ -1,0 +1,92 @@
+# Multi-Strategy Configuration for WickTrader
+# Run multiple strategies concurrently on separate Binance subaccounts
+#
+# Setup:
+# 1. Create Binance subaccounts (Wallet -> Subaccounts)
+# 2. Generate API keys for each subaccount
+# 3. Enter credentials below
+# 4. Run: python -m bot.run_bot --multi
+#
+# WARNING: Do not commit this file with real credentials to git
+
+strategies:
+  # Best risk-adjusted strategy (Sharpe: 17.48)
+  backtest-winner:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Short"       # Binance subaccount name
+      api_key: ""                     # Enter your API key
+      api_secret: ""                  # Enter your API secret
+      testnet: true                   # true = demo, false = real money
+    # Performance from 864-variant backtest:
+    # Return: +49.5%, Max DD: 10.6%, Win Rate: 80%, Trades/Year: 5
+
+  # Best long-only strategy (Sharpe: 6.68)
+  safe:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Long"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +27.7%, Max DD: 20%, Win Rate: 62.5%, Trades/Year: 8
+
+  # High returns, higher risk
+  aggressive:
+    enabled: false                   # Disabled by default
+    subaccount:
+      name: "WickTrader-Aggressive"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +216%, Max DD: 29.5%, Win Rate: 80%
+
+  # Maximum risk (only for experienced traders)
+  degen:
+    enabled: false
+    subaccount:
+      name: "WickTrader-Degen"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +380%, Max DD: 39.6%, Win Rate: 80%
+
+  # Aggressive long
+  long-aggressive:
+    enabled: false
+    subaccount:
+      name: "WickTrader-LongAgg"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +80.4%, Max DD: 56.1%, Win Rate: 62.5%
+
+
+# Global settings
+global:
+  max_concurrent_strategies: 5       # Max strategies running at once
+  health_check_interval: 60          # Seconds between health checks
+  discord_webhook: ""                # Optional: Discord notifications
+
+
+# Strategy Scheduler (optional)
+# Time-based activation/deactivation of strategies
+scheduler:
+  enabled: false                     # Set true to enable scheduling
+  mode: "time_based"                 # time_based or always_on
+  timezone: "UTC"                    # Timezone for schedules
+
+  # Per-strategy schedules
+  time_schedules:
+    backtest-winner:
+      always_on: true               # Run 24/7
+
+    safe:
+      always_on: true               # Run 24/7
+      # Or use time-based:
+      # hours: "08:00-20:00"        # Active during these hours
+      # days: ["mon", "tue", "wed", "thu", "fri"]
+
+    aggressive:
+      hours: "14:00-22:00"          # US market hours (higher volatility)
+      days: ["mon", "tue", "wed", "thu", "fri"]

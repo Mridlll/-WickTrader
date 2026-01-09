@@ -80,6 +80,10 @@ Win Rate:        80%
 - `backtest/run_real_grid_search.py` - Real grid search
 - `reports/REAL_BACKTEST_REPORT_*.md` - Verified reports
 - `reports/REAL_grid_search_*.csv` - Full results
+- `config/strategies.yaml` - Multi-strategy subaccount configuration
+- `bot/multi_strategy_runner.py` - Concurrent strategy execution
+- `bot/strategy_scheduler.py` - Time-based strategy scheduling
+- `setup_subaccounts.py` - Interactive subaccount setup wizard
 
 ### Deleted (fake data)
 - `backtest/run_full_analysis.py` - Generated fake results
@@ -106,6 +110,11 @@ Win Rate:        80%
   - [x] Push corrections to GitHub (commit f5d46dc)
   - [x] Verify bot supports SHORT strategies correctly
   - [x] Restart production runner with correct strategy (4% SHORT)
+  - [x] **Multi-Strategy Subaccount System**
+    - [x] Create config/strategies.yaml - Configuration for subaccounts
+    - [x] Create bot/multi_strategy_runner.py - Concurrent strategy execution
+    - [x] Create bot/strategy_scheduler.py - Time-based scheduling
+    - [x] Create setup_subaccounts.py - Interactive setup wizard
 - Now: [→] Paper trading with verified strategy settings (RUNNING)
 - Next: Deploy to client
 
@@ -169,3 +178,50 @@ Bot SHORT support verified:
 - Stop loss: Above candle high (correct for shorts)
 - Take profit: Entry - X% (correct for shorts)
 - Order execution: SELL order for shorts
+
+## MULTI-STRATEGY SUBACCOUNT SYSTEM
+
+Run multiple strategies concurrently on separate Binance subaccounts.
+
+### Usage
+```bash
+# Setup wizard
+python setup_subaccounts.py
+
+# Check status
+python -m bot.multi_strategy_runner --status
+
+# Run all enabled strategies
+python -m bot.multi_strategy_runner
+
+# With time-based scheduler
+python -m bot.multi_strategy_runner --scheduler
+```
+
+### Configuration (config/strategies.yaml)
+```yaml
+strategies:
+  backtest-winner:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Short"
+      api_key: "YOUR_KEY"
+      api_secret: "YOUR_SECRET"
+      testnet: true
+  safe:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Long"
+      api_key: "YOUR_KEY"
+      api_secret: "YOUR_SECRET"
+      testnet: true
+
+scheduler:
+  enabled: false
+  time_schedules:
+    backtest-winner:
+      always_on: true
+    safe:
+      hours: "08:00-20:00"
+      days: ["mon", "tue", "wed", "thu", "fri"]
+```
