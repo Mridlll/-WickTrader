@@ -23,6 +23,7 @@ import yaml
 # Add project paths
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
 from utils.logger import get_logger
 
