@@ -103,8 +103,10 @@ Win Rate:        80%
   - [x] Run real 864-variant grid search
   - [x] Update strategy presets with verified numbers
   - [x] Update README with honest performance data
-- Now: [→] Push corrections to GitHub
-- Next: Paper trading with verified strategy settings
+  - [x] Push corrections to GitHub (commit f5d46dc)
+  - [x] Verify bot supports SHORT strategies correctly
+- Now: [→] Paper trading with verified strategy settings
+- Next: Deploy to client
 
 ## GitHub
 https://github.com/Mridlll/-WickTrader
@@ -133,4 +135,22 @@ https://github.com/Mridlll/-WickTrader
 ## COMMITS THIS SESSION
 | Commit | Description |
 |--------|-------------|
-| PENDING | fix: Replace fake backtest results with real verified data |
+| f5d46dc | fix: Replace fake backtest results with real verified data |
+
+## BOT STRATEGY VERIFICATION
+The bot correctly supports all strategies:
+```
+python -m bot.run_bot --strategies
+
+[backtest-winner] 4% SHORT, fixed 15% TP, conservative - +49.5%, 80% WR
+[safe]            5% LONG, fixed 10% TP, conservative  - +27.7%, 62.5% WR
+[aggressive]      4% SHORT, fixed 15% TP, aggressive   - +216%, 80% WR
+[degen]           4% SHORT, fixed 15% TP, degen        - +380%, 80% WR
+[long-aggressive] 5% LONG, fixed 10% TP, aggressive    - +80.4%, 62.5% WR
+```
+
+Bot SHORT support verified:
+- Signal detection: Upper wick >= threshold triggers SHORT
+- Stop loss: Above candle high (correct for shorts)
+- Take profit: Entry - X% (correct for shorts)
+- Order execution: SELL order for shorts
