@@ -421,15 +421,15 @@ class WickTraderBot:
             if signal:
                 hours_ago = (len(recent_candles) - i) * 4
                 logger.warning(f"MISSED SIGNAL DETECTED from {hours_ago}h ago!")
-                logger.warning(f"  Type: {signal.type.value}")
-                logger.warning(f"  Wick: {signal.wick_percent:.2f}%")
+                logger.warning(f"  Type: {signal.signal_type.value}")
+                logger.warning(f"  Wick: {signal.wick_pct:.2f}%")
                 logger.warning(f"  Entry would have been: ${signal.entry_price:.2f}")
 
                 # Notify about missed signal
                 if self.discord:
                     await self.discord.send_message(
                         title="Missed Signal Alert",
-                        message=f"Bot was down during a {signal.wick_percent:.1f}% wick signal {hours_ago}h ago.\n"
+                        message=f"Bot was down during a {signal.wick_pct:.1f}% wick signal {hours_ago}h ago.\n"
                                 f"Entry would have been ${signal.entry_price:.2f}.\n"
                                 f"Bot is now online and monitoring.",
                         color=0xFFA500  # Orange
@@ -455,12 +455,13 @@ class WickTraderBot:
         """Send signal notification."""
         if self.discord:
             color = 0x00FF00 if action == "executed" else 0x0099FF
+            stop_loss = getattr(signal, 'stop_loss', signal.candle_low)
             await self.discord.send_message(
                 title=f"Wick Signal {action.title()}",
-                message=f"**Type:** {signal.type.value.upper()}\n"
-                        f"**Wick:** {signal.wick_percent:.2f}%\n"
+                message=f"**Type:** {signal.signal_type.value.upper()}\n"
+                        f"**Wick:** {signal.wick_pct:.2f}%\n"
                         f"**Entry:** ${signal.entry_price:.2f}\n"
-                        f"**Stop Loss:** ${signal.stop_loss:.2f}",
+                        f"**Stop Loss:** ${stop_loss:.2f}",
                 color=color
             )
 
