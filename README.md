@@ -252,6 +252,45 @@ python -m bot.run_bot --strategy safe --live --mainnet
 - Discord notifications (optional)
 - Paper trading mode for testing
 
+### Multi-Strategy Mode (Run Multiple Strategies)
+
+Run multiple strategies concurrently on separate Binance subaccounts:
+
+```bash
+# 1. Setup subaccounts (interactive wizard)
+python setup_subaccounts.py
+
+# 2. Check configuration status
+python -m bot.multi_strategy_runner --status
+
+# 3. Run all enabled strategies
+python -m bot.multi_strategy_runner
+
+# 4. With time-based scheduler (optional)
+python -m bot.multi_strategy_runner --scheduler
+```
+
+**Configuration** (`config/strategies.yaml`):
+```yaml
+strategies:
+  backtest-winner:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Short"
+      api_key: "YOUR_KEY"
+      api_secret: "YOUR_SECRET"
+      testnet: true
+  safe:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Long"
+      api_key: "YOUR_KEY"
+      api_secret: "YOUR_SECRET"
+      testnet: true
+```
+
+See `config/strategies.yaml.sample` for full configuration options including time-based scheduling.
+
 ---
 
 ## Backtesting
