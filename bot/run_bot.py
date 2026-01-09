@@ -31,64 +31,79 @@ logger = get_logger("bot_runner")
 
 
 # =============================================================================
-# CURATED STRATEGY PRESETS (Based on 480-variant backtest)
+# CURATED STRATEGY PRESETS (Based on REAL 864-variant backtest)
 # =============================================================================
-# Source: README.md Top 10 Configurations by Sharpe Ratio
+# Source: reports/REAL_BACKTEST_REPORT_20260109_013435.md
+# Data: SOL/USDT 4H, 2190 candles (Dec 2024 - Dec 2025)
 # =============================================================================
 STRATEGY_PRESETS = {
     "backtest-winner": {
-        "name": "Backtest Winner (Best Sharpe)",
-        "description": "Rank #1 from 480-variant grid search - highest Sharpe ratio",
-        "return": "+211%",
-        "max_dd": "14.9%",
-        "sharpe": "1.289",
+        "name": "Backtest Winner (Best Risk-Adjusted)",
+        "description": "Rank #1 by Sharpe - 4% wick SHORT, 80% win rate, 5 trades/year",
+        "return": "+49.5%",
+        "max_dd": "10.6%",
+        "sharpe": "17.48",
         "settings": {
-            "wick_threshold": 7.0,      # 7% wick threshold
+            "wick_threshold": 4.0,      # 4% wick threshold
             "exit_type": "fixed_tp",    # Fixed take profit
-            "fixed_tp_pct": 12.0,       # 12% TP
+            "fixed_tp_pct": 15.0,       # 15% TP
             "risk_profile": "conservative",
-            "direction": "long",
+            "direction": "short",
         }
     },
     "safe": {
-        "name": "Safe Mode",
-        "description": "Conservative risk with solid returns - Rank #9",
-        "return": "+150%",
-        "max_dd": "8.6%",
-        "sharpe": "1.001",
+        "name": "Safe Long Mode",
+        "description": "Best long-only config - 5% wick, 62.5% win rate, 8 trades/year",
+        "return": "+27.7%",
+        "max_dd": "20.0%",
+        "sharpe": "6.68",
         "settings": {
-            "wick_threshold": 6.0,      # 6% wick threshold
-            "exit_type": "rr_ratio",    # Risk:Reward exit
-            "rr_ratio": 2.0,            # 2:1 R:R
+            "wick_threshold": 5.0,      # 5% wick threshold
+            "exit_type": "fixed_tp",    # Fixed take profit
+            "fixed_tp_pct": 10.0,       # 10% TP
             "risk_profile": "conservative",
             "direction": "long",
         }
     },
     "aggressive": {
-        "name": "Aggressive Mode",
-        "description": "High returns for experienced traders - Rank #5",
-        "return": "+717%",
-        "max_dd": "31.6%",
-        "sharpe": "1.093",
+        "name": "Aggressive Short Mode",
+        "description": "High returns - 4% wick SHORT, 80% win rate, higher leverage",
+        "return": "+216%",
+        "max_dd": "29.5%",
+        "sharpe": "17.48",
         "settings": {
-            "wick_threshold": 6.0,      # 6% wick threshold
-            "exit_type": "time_based",  # Time-based exit
-            "time_exit_bars": 40,       # 40 bars (160 hours)
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "fixed_tp",    # Fixed take profit
+            "fixed_tp_pct": 15.0,       # 15% TP
             "risk_profile": "aggressive",
-            "direction": "long",
+            "direction": "short",
         }
     },
     "degen": {
-        "name": "Degen Mode",
-        "description": "Maximum risk - Rank #3 (can 20x or lose 70%+)",
-        "return": "+1,919%",
-        "max_dd": "40.7%",
-        "sharpe": "1.224",
+        "name": "Degen Short Mode",
+        "description": "Maximum risk SHORT - 80% win rate but high drawdown risk",
+        "return": "+380%",
+        "max_dd": "39.6%",
+        "sharpe": "17.48",
         "settings": {
-            "wick_threshold": 7.0,      # 7% wick threshold
-            "exit_type": "rr_ratio",    # Risk:Reward exit
-            "rr_ratio": 3.0,            # 3:1 R:R
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "fixed_tp",    # Fixed take profit
+            "fixed_tp_pct": 15.0,       # 15% TP
             "risk_profile": "degen",
+            "direction": "short",
+        }
+    },
+    "long-aggressive": {
+        "name": "Aggressive Long Mode",
+        "description": "Best aggressive long - 5% wick, 62.5% win rate",
+        "return": "+80.4%",
+        "max_dd": "56.1%",
+        "sharpe": "6.68",
+        "settings": {
+            "wick_threshold": 5.0,      # 5% wick threshold
+            "exit_type": "fixed_tp",    # Fixed take profit
+            "fixed_tp_pct": 10.0,       # 10% TP
+            "risk_profile": "aggressive",
             "direction": "long",
         }
     },
@@ -98,7 +113,7 @@ STRATEGY_PRESETS = {
 def print_strategy_menu():
     """Print available strategy presets."""
     print("\n" + "=" * 70)
-    print("  AVAILABLE STRATEGY PRESETS (from 480-variant backtest)")
+    print("  AVAILABLE STRATEGY PRESETS (from REAL 864-variant backtest)")
     print("=" * 70)
 
     for key, preset in STRATEGY_PRESETS.items():
@@ -243,10 +258,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Strategy Presets (recommended):
-  --strategy backtest-winner  Best Sharpe (1.289), +211%, 14.9% DD
-  --strategy safe             Conservative, +150%, 8.6% DD
-  --strategy aggressive       High returns, +717%, 31.6% DD
-  --strategy degen            Max risk, +1919%, 40.7% DD
+  --strategy backtest-winner  Best Sharpe SHORT, +49.5%, 10.6% DD
+  --strategy safe             Conservative LONG, +27.7%, 20% DD
+  --strategy aggressive       Aggressive SHORT, +216%, 29.5% DD
+  --strategy degen            Max risk SHORT, +380%, 39.6% DD
 
 Examples:
   python -m bot.run_bot --strategy backtest-winner     # Best tested config

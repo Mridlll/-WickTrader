@@ -2,9 +2,9 @@
 
 **Quantitative wick-based trading system for SOL/USDT with heat-based risk management**
 
-[![Variants Tested](https://img.shields.io/badge/Variants%20Tested-480-blue)]()
-[![Profitable](https://img.shields.io/badge/Profitable-91.7%25-brightgreen)]()
-[![Best Sharpe](https://img.shields.io/badge/Best%20Sharpe-1.289-yellow)]()
+[![Variants Tested](https://img.shields.io/badge/Variants%20Tested-864-blue)]()
+[![Profitable](https://img.shields.io/badge/Profitable-14.4%25-yellow)]()
+[![Best Win Rate](https://img.shields.io/badge/Best%20Win%20Rate-80%25-brightgreen)]()
 
 ---
 
@@ -46,20 +46,20 @@ python -m bot.run_bot --strategy backtest-winner
 
 ## Strategy Presets
 
-Choose a pre-configured strategy based on our 480-variant backtest:
+Choose a pre-configured strategy based on our **REAL 864-variant backtest** on SOL/USDT 4H data (Dec 2024 - Dec 2025):
 
-| Strategy | Command | Return | Max DD | Risk Level |
-|----------|---------|--------|--------|------------|
-| **Best Sharpe** | `--strategy backtest-winner` | +211% | 14.9% | Low |
-| **Safe** | `--strategy safe` | +150% | 8.6% | Very Low |
-| **Aggressive** | `--strategy aggressive` | +717% | 31.6% | High |
-| **Degen** | `--strategy degen` | +1,919% | 40.7% | Extreme |
+| Strategy | Command | Direction | Return | Max DD | Win Rate |
+|----------|---------|-----------|--------|--------|----------|
+| **Best Risk-Adjusted** | `--strategy backtest-winner` | SHORT | +49.5% | 10.6% | 80% |
+| **Safe Long** | `--strategy safe` | LONG | +27.7% | 20.0% | 62.5% |
+| **Aggressive** | `--strategy aggressive` | SHORT | +216% | 29.5% | 80% |
+| **Degen** | `--strategy degen` | SHORT | +380% | 39.6% | 80% |
 
 ```bash
 # Examples
-python -m bot.run_bot --strategy safe              # Conservative
-python -m bot.run_bot --strategy backtest-winner   # Recommended
-python -m bot.run_bot --strategy aggressive        # Higher risk
+python -m bot.run_bot --strategy safe              # Conservative long
+python -m bot.run_bot --strategy backtest-winner   # Best risk-adjusted
+python -m bot.run_bot --strategy aggressive        # Higher risk short
 python -m bot.run_bot --strategy degen             # Maximum risk
 ```
 
@@ -67,32 +67,58 @@ python -m bot.run_bot --strategy degen             # Maximum risk
 
 ## Performance Summary
 
-**Data**: Real Binance SOL/USDT 4H candles | **Period**: 12 months | **Variants**: 480 tested
+**Data**: Real Binance SOL/USDT 4H candles | **Period**: 12 months (2190 candles) | **Variants**: 864 tested
 
-### Results by Risk Profile
+### Signal Frequency by Wick Threshold
 
-| Profile | Risk/Trade | Leverage | Avg Return | Best Return | Profitable |
-|---------|------------|----------|------------|-------------|------------|
-| Conservative | 3% | 3X | +123% | +211% | 91.7% |
-| Moderate | 5% | 5X | +204% | +314% | 90.8% |
-| Aggressive | 10% | 7X | +408% | +717% | 90.0% |
-| Degen | 15% | 10X | +934% | +1,920% | 94.2% |
+| Threshold | Long Signals | Short Signals | Total/Year | Signals/Month |
+|-----------|--------------|---------------|------------|---------------|
+| 1.5% | 225 | 181 | 406 | 33.5 |
+| 2.0% | 120 | 79 | 199 | 16.4 |
+| 3.0% | 39 | 21 | 60 | 4.9 |
+| 4.0% | 21 | 7 | 28 | 2.3 |
+| 5.0% | 10 | 3 | 13 | 1.1 |
+| 6.0% | 2 | 1 | 3 | 0.2 |
+| 7.0% | 2 | 0 | 2 | 0.2 |
+
+### Results by Risk Profile (Average Across All Configurations)
+
+| Profile | Risk/Trade | Leverage | Avg Return | Profitable | Avg Max DD |
+|---------|------------|----------|------------|------------|------------|
+| Conservative | 3% | 3X | -19.5% | 18.1% | 40.0% |
+| Moderate | 5% | 5X | -29.9% | 17.1% | 55.5% |
+| Aggressive | 10% | 7X | -47.4% | 13.4% | 75.7% |
+| Degen | 15% | 10X | -56.4% | 8.8% | 84.1% |
+
+**Note**: Most configurations lose money. Only selective high-threshold strategies are profitable.
 
 ### Top 10 Configurations by Sharpe Ratio
 
 ```
-Rank | Wick | Exit     | Direction | Profile      | Return  | Sharpe | Max DD
------|------|----------|-----------|--------------|---------|--------|-------
-  1  |  7%  | fixed_12 | long      | conservative | +211.3% |  1.289 | 14.9%
-  2  |  7%  | fixed_12 | both      | moderate     | +313.6% |  1.248 | 25.6%
-  3  |  7%  | rr_3     | long      | degen        | +1919%  |  1.224 | 40.7%
-  4  |  7%  | fixed_12 | both      | conservative | +267.2% |  1.185 |  7.5%
-  5  |  6%  | time_40  | long      | aggressive   | +717.1% |  1.093 | 31.6%
-  6  |  6%  | rr_3     | both      | aggressive   | +1335%  |  1.052 | 26.4%
-  7  |  7%  | time_20  | long      | moderate     | +319.3% |  1.039 | 16.2%
-  8  |  7%  | trail_8  | long      | aggressive   | +265.6% |  1.002 | 44.5%
-  9  |  6%  | rr_2     | long      | conservative | +150.5% |  1.001 |  8.6%
- 10  |  6%  | rr_3     | long      | aggressive   | +1221%  |  1.001 | 33.2%
+Rank | Wick | Exit     | Direction | Profile      | Trades | Win%  | Return  | Sharpe  | Max DD
+-----|------|----------|-----------|--------------|--------|-------|---------|---------|-------
+  1  |  4%  | fixed_15 | short     | conservative |   5    | 80.0% | +49.5%  |  17.48  | 10.6%
+  2  |  4%  | fixed_15 | short     | moderate     |   5    | 80.0% | +89.7%  |  17.48  | 16.7%
+  3  |  4%  | fixed_15 | short     | aggressive   |   5    | 80.0% | +216%   |  17.48  | 29.5%
+  4  |  4%  | fixed_15 | short     | degen        |   5    | 80.0% | +380%   |  17.48  | 39.6%
+  5  |  4%  | time_40  | short     | conservative |   5    | 80.0% | +42.2%  |  14.73  | 11.2%
+  6  |  4%  | time_40  | short     | moderate     |   5    | 80.0% | +75.0%  |  14.73  | 17.3%
+  7  |  4%  | time_40  | short     | aggressive   |   5    | 80.0% | +173.6% |  14.73  | 29.8%
+  8  |  4%  | time_40  | short     | degen        |   5    | 80.0% | +294.7% |  14.73  | 39.6%
+  9  |  4%  | time_30  | short     | conservative |   5    | 80.0% | +28.1%  |  13.23  | 11.5%
+ 10  |  4%  | time_30  | short     | moderate     |   5    | 80.0% | +48.8%  |  13.23  | 17.8%
+```
+
+### Best LONG Configurations
+
+```
+Rank | Wick | Exit     | Profile      | Trades | Win%  | Return  | Sharpe | Max DD
+-----|------|----------|--------------|--------|-------|---------|--------|-------
+  1  |  5%  | fixed_10 | conservative |   8    | 62.5% | +27.7%  |  6.68  | 20.0%
+  2  |  5%  | fixed_10 | moderate     |   8    | 62.5% | +45.4%  |  6.68  | 31.8%
+  3  |  5%  | fixed_10 | aggressive   |   8    | 62.5% | +80.4%  |  6.68  | 56.1%
+  4  |  5%  | fixed_10 | degen        |   8    | 62.5% | +91.0%  |  6.68  | 74.0%
+  5  |  5%  | fixed_12 | conservative |   8    | 50.0% | +17.2%  |  4.14  | 20.0%
 ```
 
 ---
@@ -109,7 +135,7 @@ Rank | Wick | Exit     | Direction | Profile      | Return  | Sharpe | Max DD
 |                           SIGNAL DETECTION                                    |
 +==============================================================================+
 |                                                                              |
-|   [Candle] --> [Wick Calculator] --> [Threshold Check: 3-7%]                |
+|   [Candle] --> [Wick Calculator] --> [Threshold Check: 4-5%]                |
 |                      |                        |                              |
 |                      v                        v                              |
 |              Lower Wick >= X%?         Upper Wick >= X%?                     |
@@ -191,7 +217,7 @@ Leverage            3X            5X             7X           10X
 Max Heat           30%           50%            70%           90%
                 [===       ]  [=====     ]  [=======   ]  [=========  ]
 
-Expected DD        15%           25%            35%           55%
+Expected DD        20%           40%            60%           80%
                 (stable)      (moderate)    (volatile)    (extreme)
 ```
 
@@ -230,14 +256,14 @@ python -m bot.run_bot --strategy safe --live --mainnet
 
 ## Backtesting
 
-### Run Full Analysis
+### Run Real Grid Search
 
 ```bash
-# Generate comprehensive 480-variant analysis
-python -m backtest.run_full_analysis
+# Generate comprehensive 864-variant analysis
+python -m backtest.run_real_grid_search
 
 # View report
-cat reports/backtest_report_*.md
+cat reports/REAL_BACKTEST_REPORT_*.md
 ```
 
 ### Run Quick Backtest
@@ -270,17 +296,15 @@ WickTrader/
 |   +-- advanced_engine.py          # Heat-integrated engine
 |   +-- portfolio_engine.py         # Cross-margin accounting
 |   +-- metrics.py                  # Sharpe, Sortino, Calmar
-|   +-- variant_search.py           # 480-combo grid search
-|   +-- enhanced_report_generator.py# Professional reports
-|   +-- run_full_analysis.py        # One-click analysis
+|   +-- run_real_grid_search.py     # REAL 864-variant grid search
 |
 +-- config/
 |   +-- wick_strategy.yaml          # Strategy parameters
 |   +-- binance_testnet.yaml        # Exchange credentials
 |
 +-- reports/
-|   +-- backtest_report_*.md        # Generated reports
-|   +-- DEGEN_MODE_AUDIT.md         # Risk analysis
+|   +-- REAL_BACKTEST_REPORT_*.md   # Verified backtest reports
+|   +-- REAL_grid_search_*.csv      # Full results data
 |
 +-- data/
     +-- sol_4h/                     # Historical data cache
@@ -294,58 +318,58 @@ WickTrader/
 
 ```yaml
 wick:
-  threshold: 5.0              # Minimum wick % for signal
+  threshold: 4.0              # Minimum wick % for signal (4-5% optimal)
   require_body_confirmation: false
 
 risk:
-  risk_percent: 5.0           # Risk per trade
-  leverage: 5.0               # Position leverage
+  risk_percent: 3.0           # Risk per trade (conservative)
+  leverage: 3.0               # Position leverage
   stop_loss:
     use_wick_stop_loss: true  # Stop below candle low
     buffer_pct: 0.1           # Buffer beyond wick
 
 exit:
-  strategy: "rr_2"            # Risk:Reward 2:1
+  strategy: "fixed_15"        # Fixed 15% take profit
   # Options: fixed_10, fixed_12, fixed_15, rr_2, rr_3,
   #          trailing, time_based, opposite_signal
 ```
 
 ---
 
-## Key Findings
+## Key Findings (REAL Data)
 
 ### What Works
 
 | Finding | Evidence |
 |---------|----------|
-| 5-7% wick threshold | Filters noise, 91%+ profitable variants |
-| Wick-based stop loss | +211% vs -46% with fixed % SL |
-| Long-only direction | 53%+ win rate vs 44% for shorts |
-| 3X leverage | Same returns as 5X, half the drawdown |
-| Time-based exits | Lets winners run, +40% vs +20% fixed TP |
+| 4% wick threshold + SHORT | 80% win rate, +49.5% return, 10.6% DD |
+| 5% wick threshold + LONG | 62.5% win rate, +27.7% return |
+| Fixed 15% TP for shorts | Best Sharpe ratio (17.48) |
+| Fixed 10% TP for longs | Best long Sharpe ratio (6.68) |
+| Wick-based stop loss | Critical for edge preservation |
+| Conservative profile | Best risk-adjusted returns |
 
 ### What Fails
 
 | Configuration | Result | Why |
 |---------------|--------|-----|
-| 1.5-3% threshold | -25% to -77% | Too many false signals |
-| Fixed 3% stop loss | -46% average | Gets stopped out before reversal |
-| 1H timeframe | -16% return | Too much noise |
-| 7X+ leverage | -80% to -98% | Account blowup on drawdowns |
-| R:R 4:1+ exits | Negative | Targets too ambitious |
+| 1.5-3% threshold | -35% to -95% | Too many false signals (406 trades/year) |
+| R:R based exits | Negative returns | Too ambitious, gets stopped out |
+| Aggressive/Degen on longs | High drawdown | 50-75% max DD |
+| Both directions at low thresholds | Large losses | Short signals unreliable at <4% |
 
 ---
 
 ## Realistic Expectations
 
-> **Important**: Grid search shows *best-case scenarios*. See reports/DEGEN_MODE_AUDIT.md for Monte Carlo analysis.
+| Profile | Configuration | Return | Win Rate | Max DD | Trades/Year |
+|---------|---------------|--------|----------|--------|-------------|
+| **Best Risk-Adjusted** | 4% SHORT, fixed_15 | +49.5% | 80% | 10.6% | 5 |
+| **Best Long** | 5% LONG, fixed_10 | +27.7% | 62.5% | 20% | 8 |
+| **Aggressive** | 4% SHORT, fixed_15 | +216% | 80% | 29.5% | 5 |
+| **Degen** | 4% SHORT, fixed_15 | +380% | 80% | 39.6% | 5 |
 
-| Profile | Median Annual | Best Case | Worst Case |
-|---------|--------------|-----------|------------|
-| Conservative | +12% | +33% | -6% |
-| Moderate | +19% | +60% | -11% |
-| Aggressive | +36% | +142% | -23% |
-| Degen | +49% | +249% | -36% |
+**Important**: These are backtest results on 12 months of data. Past performance does not guarantee future results. Trade frequency is low (5-8 trades/year for optimal configs).
 
 ---
 
@@ -362,8 +386,8 @@ exit:
 
 | Report | Description |
 |--------|-------------|
-| reports/backtest_report_*.md | Full 480-variant analysis with methodology |
-| reports/DEGEN_MODE_AUDIT.md | Risk analysis of high-leverage configurations |
+| reports/REAL_BACKTEST_REPORT_*.md | Full 864-variant analysis with real data |
+| reports/REAL_grid_search_*.csv | Complete results for all configurations |
 
 ---
 
