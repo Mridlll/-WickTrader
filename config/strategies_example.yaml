@@ -1,0 +1,146 @@
+# Multi-Strategy Configuration for WickTrader
+# 10 Strategy Presets across Binance & Bybit
+#
+# Setup:
+# 1. Create subaccounts on each exchange
+# 2. Generate API keys with Futures/Contract permissions
+# 3. Enter credentials below
+# 4. Run: python -m bot.multi_strategy_runner
+#
+# WARNING: Do not commit this file with real credentials to git
+
+strategies:
+  #############################################
+  # BOTH DIRECTION STRATEGIES (50% win rate, 14-16 trades/year)
+  # Trades LONG on lower wicks, SHORT on upper wicks
+  # RECOMMENDED for higher trade volume
+  #############################################
+
+  # BOTH on Binance - Best balanced option
+  both-moderate:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Both-Binance"
+      exchange: "binance"
+      api_key: "YOUR_BINANCE_API_KEY"
+      api_secret: "YOUR_BINANCE_API_SECRET"
+      testnet: false
+    # Performance: +121% return, 40% max DD, 50% win rate, 14 trades/year
+
+  # BOTH on Bybit - Higher returns
+  both-aggressive:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Both-Bybit"
+      exchange: "bybit"
+      api_key: "YOUR_BYBIT_API_KEY"
+      api_secret: "YOUR_BYBIT_API_SECRET"
+      testnet: false
+    # Performance: +226% return, 63% max DD, 50% win rate, 14 trades/year
+
+  # Most active trading - 16 trades/year
+  active-trader:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Active"
+      exchange: "binance"
+      api_key: "YOUR_BINANCE_API_KEY_2"
+      api_secret: "YOUR_BINANCE_API_SECRET_2"
+      testnet: false
+    # Performance: +94% return, 40% max DD, 50% win rate, 16 trades/year
+
+  #############################################
+  # SHORT STRATEGIES (80% win rate, ~5 trades/year)
+  #############################################
+
+  # SHORT on Binance - Best risk-adjusted returns (Sharpe 17.48)
+  backtest-winner:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Short-Binance"
+      exchange: "binance"
+      api_key: "YOUR_BINANCE_API_KEY_3"
+      api_secret: "YOUR_BINANCE_API_SECRET_3"
+      testnet: false
+    # Performance: +49.5% return, 10.6% max DD, 80% win rate, 5 trades/year
+
+  #############################################
+  # LONG STRATEGIES (62.5% win rate, ~8 trades/year)
+  #############################################
+
+  # LONG on Bybit - Conservative approach
+  safe:
+    enabled: true
+    subaccount:
+      name: "WickTrader-Long-Bybit"
+      exchange: "bybit"
+      api_key: "YOUR_BYBIT_API_KEY_2"
+      api_secret: "YOUR_BYBIT_API_SECRET_2"
+      testnet: false
+    # Performance: +27.7% return, 20% max DD, 62.5% win rate, 8 trades/year
+
+  #############################################
+  # DISABLED BY DEFAULT (High Risk Options)
+  #############################################
+
+  aggressive:
+    enabled: false
+    subaccount:
+      name: "WickTrader-Short-Aggressive"
+      exchange: "binance"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +216% return, 29.5% max DD, 80% win rate
+
+  degen:
+    enabled: false
+    subaccount:
+      name: "WickTrader-Degen"
+      exchange: "binance"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +380% return, 39.6% max DD, 80% win rate
+
+  long-aggressive:
+    enabled: false
+    subaccount:
+      name: "WickTrader-LongAgg"
+      exchange: "bybit"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +80.4% return, 56.1% max DD, 62.5% win rate
+
+  both-conservative:
+    enabled: false
+    subaccount:
+      name: "WickTrader-Both-Safe"
+      exchange: "binance"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +71% return, 27.5% max DD, 50% win rate, 14 trades/year
+
+  both-degen:
+    enabled: false
+    subaccount:
+      name: "WickTrader-Both-Degen"
+      exchange: "bybit"
+      api_key: ""
+      api_secret: ""
+      testnet: true
+    # Performance: +266% return, 78% max DD, 50% win rate, 14 trades/year
+
+
+# Global settings
+global:
+  max_concurrent_strategies: 5
+  health_check_interval: 60
+  discord_webhook: ""              # Optional: Add Discord webhook for alerts
+
+
+# Scheduler (optional - all run 24/7 by default)
+scheduler:
+  enabled: false

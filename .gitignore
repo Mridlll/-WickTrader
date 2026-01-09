@@ -14,6 +14,8 @@ venv/
 # Config with secrets
 config/*.yaml
 !config/wick_strategy.yaml
+!config/strategies_example.yaml
+!config/strategies.yaml.sample
 
 # Data (large files)
 data/**/*.csv

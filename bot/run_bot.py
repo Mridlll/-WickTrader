@@ -107,6 +107,81 @@ STRATEGY_PRESETS = {
             "direction": "long",
         }
     },
+
+    # =========================================================================
+    # BOTH DIRECTION STRATEGIES (Higher Trade Volume - 14-16 trades/year)
+    # Trades LONG on lower wicks, SHORT on upper wicks
+    # =========================================================================
+    "both-conservative": {
+        "name": "Both Directions Conservative",
+        "description": "Long+Short on wicks - 14 trades/year, 50% win rate, low risk",
+        "return": "+71.4%",
+        "max_dd": "27.5%",
+        "sharpe": "5.41",
+        "settings": {
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "time_based",  # Time-based exit
+            "time_exit_bars": 40,       # 40 bars (~7 days)
+            "risk_profile": "conservative",
+            "direction": "both",
+        }
+    },
+    "both-moderate": {
+        "name": "Both Directions Moderate",
+        "description": "Long+Short on wicks - 14 trades/year, 50% win rate, balanced",
+        "return": "+121.1%",
+        "max_dd": "40.3%",
+        "sharpe": "5.41",
+        "settings": {
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "time_based",  # Time-based exit
+            "time_exit_bars": 40,       # 40 bars (~7 days)
+            "risk_profile": "moderate",
+            "direction": "both",
+        }
+    },
+    "both-aggressive": {
+        "name": "Both Directions Aggressive",
+        "description": "Long+Short on wicks - 14 trades/year, 50% win rate, high returns",
+        "return": "+225.9%",
+        "max_dd": "63.3%",
+        "sharpe": "5.41",
+        "settings": {
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "time_based",  # Time-based exit
+            "time_exit_bars": 40,       # 40 bars (~7 days)
+            "risk_profile": "aggressive",
+            "direction": "both",
+        }
+    },
+    "both-degen": {
+        "name": "Both Directions Degen",
+        "description": "Long+Short on wicks - 14 trades/year, 50% win rate, max leverage",
+        "return": "+265.8%",
+        "max_dd": "78.4%",
+        "sharpe": "5.41",
+        "settings": {
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "time_based",  # Time-based exit
+            "time_exit_bars": 40,       # 40 bars (~7 days)
+            "risk_profile": "degen",
+            "direction": "both",
+        }
+    },
+    "active-trader": {
+        "name": "Active Trader (Most Trades)",
+        "description": "Long+Short - 16 trades/year, 50% win rate, time_30 exit",
+        "return": "+93.7%",
+        "max_dd": "39.5%",
+        "sharpe": "4.50",
+        "settings": {
+            "wick_threshold": 4.0,      # 4% wick threshold
+            "exit_type": "time_based",  # Time-based exit
+            "time_exit_bars": 30,       # 30 bars (~5 days)
+            "risk_profile": "moderate",
+            "direction": "both",
+        }
+    },
 }
 
 
