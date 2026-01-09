@@ -11,12 +11,14 @@ from .base import (
     SymbolInfo,
 )
 from .binance import BinanceExchange
+from .bybit import BybitExchange
 from .hyperliquid import HyperliquidExchange
 
 __all__ = [
     'AccountBalance',
     'BaseExchange',
     'BinanceExchange',
+    'BybitExchange',
     'Candle',
     'HyperliquidExchange',
     'Order',

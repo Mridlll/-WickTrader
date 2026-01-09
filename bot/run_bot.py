@@ -165,16 +165,27 @@ def apply_strategy_preset(config: BotConfig, preset_name: str) -> BotConfig:
     return config
 
 
-def load_credentials(testnet: bool = True) -> tuple:
-    """Load API credentials from config."""
-    config_path = project_root / "config" / "binance_testnet.yaml"
+def load_credentials(exchange_type: str = "binance", testnet: bool = True) -> tuple:
+    """Load API credentials from config.
+
+    Args:
+        exchange_type: Exchange name ('binance' or 'bybit')
+        testnet: Whether to use testnet config
+
+    Returns:
+        Tuple of (api_key, api_secret)
+    """
+    # Determine config file based on exchange
+    config_name = f"{exchange_type}_testnet.yaml" if testnet else f"{exchange_type}_mainnet.yaml"
+    config_path = project_root / "config" / config_name
 
     if not config_path.exists():
         raise FileNotFoundError(
             f"Credentials file not found: {config_path}\n"
-            "Create config/binance_testnet.yaml with:\n"
-            "  api_key: your_api_key\n"
-            "  api_secret: your_api_secret"
+            f"Create config/{config_name} with:\n"
+            "  exchange:\n"
+            "    api_key: your_api_key\n"
+            "    api_secret: your_api_secret"
         )
 
     with open(config_path, 'r') as f:
@@ -207,10 +218,16 @@ def create_default_config() -> BotConfig:
     )
 
 
-async def run_bot(config: BotConfig, testnet: bool = True) -> None:
-    """Run the trading bot."""
+async def run_bot(config: BotConfig, testnet: bool = True, exchange_type: str = "binance") -> None:
+    """Run the trading bot.
+
+    Args:
+        config: Bot configuration
+        testnet: Use testnet if True
+        exchange_type: Exchange to use ('binance' or 'bybit')
+    """
     # Load credentials
-    api_key, api_secret = load_credentials(testnet)
+    api_key, api_secret = load_credentials(exchange_type, testnet)
 
     if not api_key or not api_secret:
         raise ValueError("API credentials not configured")
@@ -220,7 +237,8 @@ async def run_bot(config: BotConfig, testnet: bool = True) -> None:
         config=config,
         api_key=api_key,
         api_secret=api_secret,
-        testnet=testnet
+        testnet=testnet,
+        exchange_type=exchange_type
     )
 
     # Handle shutdown signals
@@ -263,9 +281,13 @@ Strategy Presets (recommended):
   --strategy aggressive       Aggressive SHORT, +216%, 29.5% DD
   --strategy degen            Max risk SHORT, +380%, 39.6% DD
 
+Exchanges:
+  --exchange binance          Use Binance Futures (default)
+  --exchange bybit            Use Bybit Perpetuals
+
 Examples:
-  python -m bot.run_bot --strategy backtest-winner     # Best tested config
-  python -m bot.run_bot --strategy safe                # Conservative
+  python -m bot.run_bot --strategy backtest-winner     # Binance (default)
+  python -m bot.run_bot --strategy safe --exchange bybit  # Bybit
   python -m bot.run_bot --strategies                   # Show all presets
 
 Manual override (advanced):
@@ -284,6 +306,14 @@ Manual override (advanced):
         help="Show available strategy presets and exit"
     )
 
+    # Exchange selection
+    parser.add_argument(
+        "--exchange", "-e", type=str,
+        choices=["binance", "bybit"],
+        default="binance",
+        help="Exchange to use (default: binance)"
+    )
+
     # Trading mode
     parser.add_argument(
         "--paper", action="store_true", default=True,
@@ -295,11 +325,11 @@ Manual override (advanced):
     )
     parser.add_argument(
         "--testnet", action="store_true", default=True,
-        help="Use Binance testnet (default)"
+        help="Use testnet (default)"
     )
     parser.add_argument(
         "--mainnet", action="store_true",
-        help="Use Binance mainnet"
+        help="Use mainnet"
     )
 
     # Manual overrides (advanced)
@@ -371,12 +401,16 @@ Manual override (advanced):
     if args.exit:
         config.exit_type = args.exit
 
+    # Get exchange type
+    exchange_type = args.exchange
+
     # Print config
     print("=" * 60)
     print("WickTrader Bot Configuration")
     print("=" * 60)
     if strategy_name:
         print(f"  Strategy:      {strategy_name}")
+    print(f"  Exchange:      {exchange_type.upper()}")
     print(f"  Mode:          {'PAPER' if paper_trade else 'LIVE'}")
     print(f"  Network:       {'Testnet' if testnet else 'MAINNET'}")
     print(f"  Symbol:        {config.symbol}/USDT")
@@ -388,7 +422,7 @@ Manual override (advanced):
     print("=" * 60 + "\n")
 
     # Run bot
-    asyncio.run(run_bot(config, testnet=testnet))
+    asyncio.run(run_bot(config, testnet=testnet, exchange_type=exchange_type))
 
 
 if __name__ == "__main__":

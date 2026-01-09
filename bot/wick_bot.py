@@ -19,7 +19,8 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
 
 from exchanges.binance import BinanceExchange
-from exchanges.base import OrderSide, OrderType, Position
+from exchanges.bybit import BybitExchange
+from exchanges.base import BaseExchange, OrderSide, OrderType, Position
 from strategy.wick_signals import WickSignalDetector, WickSignal
 from strategy.heat_risk import (
     HeatRiskManager, HeatZone, PositionHeat,
@@ -170,26 +171,36 @@ class WickTraderBot:
         config: BotConfig,
         api_key: str,
         api_secret: str,
-        testnet: bool = True
+        testnet: bool = True,
+        exchange_type: str = "binance"
     ):
         """
         Initialize the trading bot.
 
         Args:
             config: Bot configuration
-            api_key: Binance API key
-            api_secret: Binance API secret
+            api_key: Exchange API key
+            api_secret: Exchange API secret
             testnet: Use testnet if True
+            exchange_type: Exchange to use ('binance' or 'bybit')
         """
         self.config = config
         self.testnet = testnet
+        self.exchange_type = exchange_type
 
-        # Initialize exchange
-        self.exchange = BinanceExchange(
-            api_key=api_key,
-            api_secret=api_secret,
-            testnet=testnet
-        )
+        # Initialize exchange based on type
+        if exchange_type == "bybit":
+            self.exchange: BaseExchange = BybitExchange(
+                api_key=api_key,
+                api_secret=api_secret,
+                testnet=testnet
+            )
+        else:
+            self.exchange: BaseExchange = BinanceExchange(
+                api_key=api_key,
+                api_secret=api_secret,
+                testnet=testnet
+            )
 
         # Initialize signal detector
         self.signal_detector = WickSignalDetector(
