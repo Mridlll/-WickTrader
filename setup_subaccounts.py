@@ -27,8 +27,29 @@ def print_header():
     print("  WICKTRADER MULTI-STRATEGY SUBACCOUNT SETUP")
     print("=" * 70)
     print("\n  This wizard will help you configure multiple strategies")
-    print("  to run concurrently on separate exchange subaccounts.")
-    print("\n  Supported exchanges: Binance, Bybit\n")
+    print("  to run concurrently on separate exchange subaccounts.\n")
+
+
+def get_exchange_selection() -> str:
+    """Get exchange selection at the start."""
+    print("  " + "=" * 50)
+    print("  STEP 1: SELECT YOUR EXCHANGE")
+    print("  " + "=" * 50)
+    print("\n  Which exchange do you want to use?\n")
+    print("    1. Binance Futures")
+    print("    2. Bybit Perpetuals")
+    print()
+
+    while True:
+        choice = input("  Enter 1 or 2: ").strip()
+        if choice == '1':
+            print("\n  Selected: BINANCE\n")
+            return 'binance'
+        elif choice == '2':
+            print("\n  Selected: BYBIT\n")
+            return 'bybit'
+        else:
+            print("  Please enter 1 or 2\n")
 
 
 def print_strategies():
@@ -73,30 +94,15 @@ def get_strategy_selection() -> List[str]:
             print("  Invalid input. Enter numbers like '1,2,3' or 'all'\n")
 
 
-def get_subaccount_credentials(strategy_name: str, preset: Dict) -> Dict[str, Any]:
+def get_subaccount_credentials(strategy_name: str, preset: Dict, exchange: str) -> Dict[str, Any]:
     """Get subaccount credentials for a strategy."""
     direction = preset['settings']['direction'].upper()
 
     print(f"\n  " + "-" * 50)
     print(f"  Configure [{strategy_name}] - {direction}")
+    print(f"  Exchange: {exchange.upper()}")
     print(f"  Expected: {preset['return']} return, {preset['max_dd']} max DD")
     print(f"  " + "-" * 50)
-
-    # Ask for exchange selection
-    print("\n  Select exchange:")
-    print("    1. Binance")
-    print("    2. Bybit")
-
-    while True:
-        exchange_choice = input("  Exchange [1/2]: ").strip()
-        if exchange_choice == '1':
-            exchange = 'binance'
-            break
-        elif exchange_choice == '2':
-            exchange = 'bybit'
-            break
-        else:
-            print("  Please enter 1 or 2")
 
     # Show exchange-specific instructions
     if exchange == 'binance':
@@ -219,6 +225,9 @@ def main():
     """Main wizard entry point."""
     print_header()
 
+    # STEP 1: Get exchange selection FIRST
+    exchange = get_exchange_selection()
+
     # Check for existing config
     config_path = project_root / "config" / "strategies.yaml"
     if config_path.exists():
@@ -229,12 +238,16 @@ def main():
             print("  Edit config/strategies.yaml manually if needed.\n")
             return
 
-    # Show available strategies
+    # STEP 2: Show available strategies
+    print("  " + "=" * 50)
+    print("  STEP 2: SELECT STRATEGIES")
+    print("  " + "=" * 50)
     print_strategies()
 
     # Get strategy selection
     selected = get_strategy_selection()
     print(f"\n  Selected: {', '.join(selected)}")
+    print(f"  Exchange: {exchange.upper()}")
 
     # Build configuration
     config = {
@@ -246,24 +259,28 @@ def main():
         }
     }
 
-    # Get credentials for each strategy
+    # STEP 3: Get credentials for each strategy
+    print("\n  " + "=" * 50)
+    print("  STEP 3: ENTER API CREDENTIALS")
+    print("  " + "=" * 50)
+
     for strategy_name in selected:
         preset = STRATEGY_PRESETS[strategy_name]
-        subaccount = get_subaccount_credentials(strategy_name, preset)
+        subaccount = get_subaccount_credentials(strategy_name, preset, exchange)
 
         config["strategies"][strategy_name] = {
             "enabled": bool(subaccount["api_key"]),  # Enable if credentials provided
             "subaccount": subaccount
         }
 
-    # Add all other strategies as disabled
+    # Add all other strategies as disabled (using selected exchange)
     for name in STRATEGY_PRESETS:
         if name not in config["strategies"]:
             config["strategies"][name] = {
                 "enabled": False,
                 "subaccount": {
                     "name": f"WickTrader-{name}",
-                    "exchange": "binance",
+                    "exchange": exchange,
                     "api_key": "",
                     "api_secret": "",
                     "testnet": True
