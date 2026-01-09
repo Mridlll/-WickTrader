@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Multi-Strategy Runner for WickTrader.
 
-Run multiple strategies concurrently on separate Binance subaccounts.
+Run multiple strategies concurrently on separate exchange subaccounts.
+Supports both Binance and Bybit exchanges.
 
 Usage:
     python -m bot.multi_strategy_runner                    # Run all enabled strategies
@@ -52,6 +53,7 @@ class StrategyInstance:
     api_secret: str
     testnet: bool
     enabled: bool
+    exchange_type: str = "binance"  # 'binance' or 'bybit'
     bot: Optional[WickTraderBot] = None
     task: Optional[asyncio.Task] = None
     status: StrategyStatus = StrategyStatus.STOPPED
@@ -111,6 +113,12 @@ class MultiStrategyRunner:
             bot_config = apply_strategy_preset(bot_config, name)
             bot_config.paper_trade = True  # Always paper until explicitly set
 
+            # Get exchange type (default to binance for backwards compatibility)
+            exchange_type = subaccount.get('exchange', 'binance').lower()
+            if exchange_type not in ['binance', 'bybit']:
+                logger.warning(f"[{name}] Unknown exchange '{exchange_type}', defaulting to binance")
+                exchange_type = 'binance'
+
             # Create strategy instance
             instance = StrategyInstance(
                 name=name,
@@ -118,7 +126,8 @@ class MultiStrategyRunner:
                 api_key=subaccount.get('api_key', ''),
                 api_secret=subaccount.get('api_secret', ''),
                 testnet=subaccount.get('testnet', True),
-                enabled=strategy_config.get('enabled', False)
+                enabled=strategy_config.get('enabled', False),
+                exchange_type=exchange_type
             )
 
             self.strategies[name] = instance
@@ -274,17 +283,19 @@ class MultiStrategyRunner:
         instance.started_at = datetime.now()
 
         try:
-            # Create bot
+            # Create bot with exchange type
             bot = WickTraderBot(
                 config=instance.config,
                 api_key=instance.api_key,
                 api_secret=instance.api_secret,
-                testnet=instance.testnet
+                testnet=instance.testnet,
+                exchange_type=instance.exchange_type
             )
             instance.bot = bot
             instance.status = StrategyStatus.RUNNING
 
             logger.info(f"[{instance.name}] Bot initialized")
+            logger.info(f"[{instance.name}]   Exchange: {instance.exchange_type.upper()}")
             logger.info(f"[{instance.name}]   Direction: {instance.config.direction}")
             logger.info(f"[{instance.name}]   Threshold: {instance.config.wick_threshold}%")
             logger.info(f"[{instance.name}]   Profile: {instance.config.risk_profile}")
@@ -353,6 +364,7 @@ class MultiStrategyRunner:
                 "enabled": instance.enabled,
                 "has_credentials": bool(instance.api_key and instance.api_secret),
                 "testnet": instance.testnet,
+                "exchange": instance.exchange_type,
                 "preset": {
                     "direction": preset.get('settings', {}).get('direction', 'unknown'),
                     "expected_return": preset.get('return', 'N/A'),
@@ -390,11 +402,13 @@ class MultiStrategyRunner:
 
             creds = "API OK" if info["has_credentials"] else "NO API"
             network = "Testnet" if info["testnet"] else "MAINNET"
+            exchange = info.get("exchange", "binance").upper()
 
             print(f"\n  {status_emoji} {name}")
+            print(f"       Exchange: {exchange} | Network: {network}")
             print(f"       Direction: {info['preset']['direction'].upper()}")
             print(f"       Expected: {info['preset']['expected_return']} return, {info['preset']['max_dd']} DD")
-            print(f"       Credentials: {creds} | Network: {network}")
+            print(f"       Credentials: {creds}")
 
             if info["status"] == "running" and info.get("stats"):
                 stats = info["stats"]

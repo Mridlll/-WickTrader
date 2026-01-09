@@ -175,6 +175,7 @@ class ProductionRunner:
     - Watchdog for detecting frozen bot
     - State persistence
     - Discord notifications
+    - Multi-exchange support (Binance, Bybit)
     """
 
     # Backoff schedule (seconds): 30s, 1m, 2m, 5m, 10m
@@ -186,11 +187,13 @@ class ProductionRunner:
         self,
         strategy: str = "backtest-winner",
         max_restarts: int = 10,
-        testnet: bool = True
+        testnet: bool = True,
+        exchange_type: str = "binance"
     ):
         self.strategy = strategy
         self.max_restarts = max_restarts
         self.testnet = testnet
+        self.exchange_type = exchange_type
 
         # Bot instance
         self.bot: Optional[WickTraderBot] = None
@@ -289,11 +292,16 @@ class ProductionRunner:
             logger.warning(f"Could not save state: {e}")
 
     def _load_credentials(self) -> tuple:
-        """Load API credentials from config."""
-        config_path = project_root / "config" / "binance_testnet.yaml"
+        """Load API credentials from config based on exchange type."""
+        # Determine config file based on exchange and network
+        config_name = f"{self.exchange_type}_{'testnet' if self.testnet else 'mainnet'}.yaml"
+        config_path = project_root / "config" / config_name
 
         if not config_path.exists():
-            raise FileNotFoundError(f"Credentials file not found: {config_path}")
+            raise FileNotFoundError(
+                f"Credentials file not found: {config_path}\n"
+                f"Create config/{config_name} with your {self.exchange_type} API credentials."
+            )
 
         with open(config_path, 'r') as f:
             creds = yaml.safe_load(f)
@@ -323,12 +331,13 @@ class ProductionRunner:
             self.config = apply_strategy_preset(self.config, self.strategy)
             self.config.paper_trade = True  # Always paper trade in production runner for safety
 
-            # Create bot
+            # Create bot with exchange type
             self.bot = WickTraderBot(
                 config=self.config,
                 api_key=api_key,
                 api_secret=api_secret,
-                testnet=self.testnet
+                testnet=self.testnet,
+                exchange_type=self.exchange_type
             )
 
             # Add heartbeat to bot
@@ -340,8 +349,9 @@ class ProductionRunner:
                 await self.discord.send_message(
                     title="WickTrader Production Started",
                     message=f"**Strategy:** {self.strategy}\n"
+                            f"**Exchange:** {self.exchange_type.upper()}\n"
                             f"**Restart count:** {self.state.restart_count}\n"
-                            f"**Testnet:** {self.testnet}",
+                            f"**Network:** {'Testnet' if self.testnet else 'MAINNET'}",
                     color=0x00FF00
                 )
 
@@ -390,8 +400,9 @@ class ProductionRunner:
         logger.info("WickTrader - Production Runner")
         logger.info("=" * 60)
         logger.info(f"Strategy: {self.strategy}")
+        logger.info(f"Exchange: {self.exchange_type.upper()}")
+        logger.info(f"Network: {'Testnet' if self.testnet else 'MAINNET'}")
         logger.info(f"Max restarts: {self.max_restarts}")
-        logger.info(f"Testnet: {self.testnet}")
         logger.info("=" * 60)
 
         # Start watchdog
@@ -473,9 +484,14 @@ Strategy Presets:
   aggressive       High returns, +717%, 31.6% DD
   degen            Max risk, +1919%, 40.7% DD
 
+Exchanges:
+  binance          Binance Futures (default)
+  bybit            Bybit Perpetuals
+
 Examples:
   python run_production.py --strategy backtest-winner
-  python run_production.py --strategy safe --max-restarts 5
+  python run_production.py --strategy safe --exchange bybit --mainnet
+  python run_production.py --strategy aggressive --max-restarts 5
         """
     )
     parser.add_argument(
@@ -483,6 +499,12 @@ Examples:
         default='backtest-winner',
         choices=list(STRATEGY_PRESETS.keys()),
         help='Strategy preset (default: backtest-winner)'
+    )
+    parser.add_argument(
+        '--exchange', '-e',
+        default='binance',
+        choices=['binance', 'bybit'],
+        help='Exchange to use (default: binance)'
     )
     parser.add_argument(
         '--max-restarts', '-m',
@@ -507,7 +529,8 @@ Examples:
     runner = ProductionRunner(
         strategy=args.strategy,
         max_restarts=args.max_restarts,
-        testnet=not args.mainnet
+        testnet=not args.mainnet,
+        exchange_type=args.exchange
     )
 
     if args.reset_state:

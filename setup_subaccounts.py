@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Interactive Setup Wizard for WickTrader Multi-Strategy Subaccounts.
 
-This wizard helps configure multiple Binance subaccounts to run different
-strategies concurrently.
+This wizard helps configure multiple exchange subaccounts to run different
+strategies concurrently. Supports both Binance and Bybit exchanges.
 
 Usage:
     python setup_subaccounts.py
@@ -27,7 +27,8 @@ def print_header():
     print("  WICKTRADER MULTI-STRATEGY SUBACCOUNT SETUP")
     print("=" * 70)
     print("\n  This wizard will help you configure multiple strategies")
-    print("  to run concurrently on separate Binance subaccounts.\n")
+    print("  to run concurrently on separate exchange subaccounts.")
+    print("\n  Supported exchanges: Binance, Bybit\n")
 
 
 def print_strategies():
@@ -81,19 +82,45 @@ def get_subaccount_credentials(strategy_name: str, preset: Dict) -> Dict[str, An
     print(f"  Expected: {preset['return']} return, {preset['max_dd']} max DD")
     print(f"  " + "-" * 50)
 
-    print(f"\n  Steps to create subaccount on Binance:")
-    print(f"  1. Log in to Binance")
-    print(f"  2. Go to: Wallet -> Subaccounts")
-    print(f"  3. Create subaccount named: WickTrader-{strategy_name}")
-    print(f"  4. Enable Futures trading for the subaccount")
-    print(f"  5. Generate API keys with Futures permission")
-    print(f"  6. Transfer funds to the subaccount\n")
+    # Ask for exchange selection
+    print("\n  Select exchange:")
+    print("    1. Binance")
+    print("    2. Bybit")
+
+    while True:
+        exchange_choice = input("  Exchange [1/2]: ").strip()
+        if exchange_choice == '1':
+            exchange = 'binance'
+            break
+        elif exchange_choice == '2':
+            exchange = 'bybit'
+            break
+        else:
+            print("  Please enter 1 or 2")
+
+    # Show exchange-specific instructions
+    if exchange == 'binance':
+        print(f"\n  Steps to create subaccount on Binance:")
+        print(f"  1. Log in to Binance")
+        print(f"  2. Go to: Wallet -> Subaccounts")
+        print(f"  3. Create subaccount named: WickTrader-{strategy_name}")
+        print(f"  4. Enable Futures trading for the subaccount")
+        print(f"  5. Generate API keys with Futures permission")
+        print(f"  6. Transfer funds to the subaccount\n")
+    else:
+        print(f"\n  Steps to create subaccount on Bybit:")
+        print(f"  1. Log in to Bybit")
+        print(f"  2. Go to: Assets -> Sub Account")
+        print(f"  3. Create subaccount named: WickTrader-{strategy_name}")
+        print(f"  4. Generate API keys with Contract permission")
+        print(f"  5. Transfer funds to the subaccount\n")
 
     api_key = input("  API Key (or 'skip' to configure later): ").strip()
 
     if api_key.lower() == 'skip':
         return {
             "name": f"WickTrader-{strategy_name}",
+            "exchange": exchange,
             "api_key": "",
             "api_secret": "",
             "testnet": True
@@ -114,6 +141,7 @@ def get_subaccount_credentials(strategy_name: str, preset: Dict) -> Dict[str, An
 
     return {
         "name": f"WickTrader-{strategy_name}",
+        "exchange": exchange,
         "api_key": api_key,
         "api_secret": api_secret,
         "testnet": testnet
@@ -235,6 +263,7 @@ def main():
                 "enabled": False,
                 "subaccount": {
                     "name": f"WickTrader-{name}",
+                    "exchange": "binance",
                     "api_key": "",
                     "api_secret": "",
                     "testnet": True
