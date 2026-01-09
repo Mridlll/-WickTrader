@@ -578,25 +578,36 @@ class BinanceExchange(BaseExchange):
         data = await self._request("POST", "/fapi/v1/order", params, signed=True)
         order = self._parse_order(data)
 
-        # Place stop loss order if specified
+        # Place stop loss order if specified (CRITICAL - must succeed)
         if stop_loss and order.status in [OrderStatus.FILLED, OrderStatus.OPEN]:
-            await self._place_stop_order(
+            sl_success = await self._place_stop_order(
                 formatted_symbol,
                 OrderSide.SELL if side == OrderSide.BUY else OrderSide.BUY,
                 stop_loss,
                 size,
                 "STOP_MARKET"
             )
+            if not sl_success:
+                # SL failed - close the position to prevent unprotected trade
+                logger.error("CRITICAL: Stop loss placement failed - closing position for safety")
+                try:
+                    await self.close_position(symbol)
+                    logger.info("Position closed due to SL failure")
+                except Exception as close_err:
+                    logger.error(f"Failed to close position after SL failure: {close_err}")
+                raise Exception(f"Stop loss order failed after retries - position closed for safety")
 
-        # Place take profit order if specified
+        # Place take profit order if specified (optional - failure doesn't close position)
         if take_profit and order.status in [OrderStatus.FILLED, OrderStatus.OPEN]:
-            await self._place_stop_order(
+            tp_success = await self._place_stop_order(
                 formatted_symbol,
                 OrderSide.SELL if side == OrderSide.BUY else OrderSide.BUY,
                 take_profit,
                 size,
                 "TAKE_PROFIT_MARKET"
             )
+            if not tp_success:
+                logger.warning("Take profit order failed - position remains open without TP")
 
         return order
 
@@ -606,10 +617,11 @@ class BinanceExchange(BaseExchange):
         side: OrderSide,
         stop_price: float,
         size: float,
-        order_type: str
-    ) -> None:
+        order_type: str,
+        max_retries: int = 3
+    ) -> bool:
         """
-        Place a stop loss or take profit order.
+        Place a stop loss or take profit order with retry logic and idempotency.
 
         Args:
             symbol: Formatted symbol
@@ -617,7 +629,24 @@ class BinanceExchange(BaseExchange):
             stop_price: Trigger price
             size: Order size
             order_type: STOP_MARKET or TAKE_PROFIT_MARKET
+            max_retries: Maximum retry attempts
+
+        Returns:
+            True if order placed successfully (or already exists)
         """
+        # Check for existing orders of this type (idempotency)
+        try:
+            open_orders = await self.get_open_orders(symbol)
+            for order in open_orders:
+                # Check if an order of this type already exists near this price
+                if order.order_type.value.upper() in order_type:
+                    price_diff = abs((order.price or 0) - stop_price) / stop_price if stop_price > 0 else 0
+                    if price_diff < 0.01:  # Within 1% of target price
+                        logger.info(f"Existing {order_type} order found at {order.price} - skipping duplicate")
+                        return True
+        except Exception as e:
+            logger.debug(f"Could not check existing orders: {e}")
+
         params: Dict[str, Any] = {
             "symbol": symbol,
             "side": self._map_order_side(side),
@@ -627,11 +656,23 @@ class BinanceExchange(BaseExchange):
             "reduceOnly": "true"
         }
 
-        try:
-            await self._request("POST", "/fapi/v1/order", params, signed=True)
-            logger.info(f"Placed {order_type} order at {stop_price}")
-        except Exception as e:
-            logger.error(f"Failed to place {order_type} order: {e}")
+        for attempt in range(max_retries):
+            try:
+                await self._request("POST", "/fapi/v1/order", params, signed=True)
+                logger.info(f"Placed {order_type} order at {stop_price}")
+                return True
+            except Exception as e:
+                error_str = str(e)
+                # Check if order already exists (Binance error code)
+                if "-2021" in error_str:  # Order already exists
+                    logger.info(f"{order_type} order already exists")
+                    return True
+                logger.error(f"Failed to place {order_type} order (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(self.RETRY_DELAY * (attempt + 1))
+
+        logger.error(f"CRITICAL: Failed to place {order_type} order after {max_retries} attempts")
+        return False
 
     async def cancel_order(self, order_id: str, symbol: str) -> bool:
         """

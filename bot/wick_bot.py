@@ -7,7 +7,7 @@ and executes trades using heat-based risk management.
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
@@ -57,6 +57,7 @@ class BotConfig:
     fixed_tp_pct: float = 15.0
     rr_ratio: float = 2.0
     time_exit_bars: int = 30
+    time_exit_tp_pct: float = 30.0  # Large TP for time-based exits (let time decide, not price)
     trailing_activation_pct: float = 10.0
     trailing_distance_pct: float = 5.0
 
@@ -268,6 +269,13 @@ class WickTraderBot:
             # Update heat manager with initial equity
             self.risk_manager.update_equity(balance.total_balance)
 
+            # Load persisted heat state if available
+            heat_state_path = project_root / "data" / "heat_state.json"
+            if self.risk_manager.load_state(str(heat_state_path)):
+                logger.info("Loaded persisted heat state")
+            else:
+                logger.info("No persisted heat state found - starting fresh")
+
             # Check for existing positions
             await self._check_existing_positions()
 
@@ -476,7 +484,7 @@ class WickTraderBot:
 
     def _get_next_candle_close(self) -> datetime:
         """Calculate when the next 4H candle closes."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # 4H candles close at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
         current_hour = now.hour
@@ -493,7 +501,7 @@ class WickTraderBot:
     def _seconds_until_candle_close(self) -> int:
         """Get seconds until next candle close."""
         next_close = self._get_next_candle_close()
-        delta = (next_close - datetime.utcnow()).total_seconds()
+        delta = (next_close - datetime.now(timezone.utc)).total_seconds()
         return max(5, int(delta))  # Minimum 5 seconds
 
     def _update_heartbeat(self) -> None:
@@ -505,7 +513,7 @@ class WickTraderBot:
 
             # Calculate time until next 4H candle
             next_candle = self._get_next_candle_close()
-            time_until = (next_candle - datetime.utcnow()).total_seconds()
+            time_until = (next_candle - datetime.now(timezone.utc)).total_seconds()
 
             self._heartbeat_file.write_text(
                 f"{now.isoformat()}\n"
@@ -609,7 +617,7 @@ class WickTraderBot:
         elif self.config.exit_type == "rr_ratio":
             tp_distance = sl_distance * self.config.rr_ratio
         else:
-            tp_distance = signal.entry_price * 0.30  # Large for time-based
+            tp_distance = signal.entry_price * (self.config.time_exit_tp_pct / 100)
 
         if is_long:
             take_profit = signal.entry_price + tp_distance
@@ -635,7 +643,17 @@ class WickTraderBot:
 
         # Get symbol info for lot size
         symbol_info = await self.exchange.get_symbol_info(self.config.symbol)
+
+        # Round to lot size and enforce min/max bounds
         size = round(size / symbol_info.lot_size) * symbol_info.lot_size
+        size = max(symbol_info.min_size, min(size, symbol_info.max_size))
+
+        # Verify position size is valid
+        if size < symbol_info.min_size:
+            logger.warning(
+                f"Position size {size} below minimum {symbol_info.min_size} - skipping trade"
+            )
+            return
 
         logger.info(
             f"Trade setup: {signal.signal_type.value} {size:.4f} {self.config.symbol} | "
@@ -674,6 +692,10 @@ class WickTraderBot:
             )
             self.risk_manager.add_position(position_heat)
             logger.debug(f"Added position to heat tracker: {risk_amount:.2f} risk, {position_heat.heat_contribution:.1f}% heat")
+
+            # Persist heat state
+            heat_state_path = project_root / "data" / "heat_state.json"
+            self.risk_manager.save_state(str(heat_state_path))
 
             self.state = BotState.IN_POSITION
             self.stats["trades_taken"] += 1
@@ -722,6 +744,10 @@ class WickTraderBot:
                 )
                 self.risk_manager.add_position(position_heat)
                 logger.debug(f"Added position to heat tracker: {risk_amount:.2f} risk, {position_heat.heat_contribution:.1f}% heat")
+
+                # Persist heat state
+                heat_state_path = project_root / "data" / "heat_state.json"
+                self.risk_manager.save_state(str(heat_state_path))
 
                 self.state = BotState.IN_POSITION
                 self.stats["trades_taken"] += 1
@@ -858,28 +884,49 @@ class WickTraderBot:
         )
 
         # Execute close
+        exchange_close_success = True
         if not self.config.paper_trade:
             try:
                 await self.exchange.close_position(self.config.symbol)
                 logger.info("Position closed on exchange")
             except Exception as e:
-                logger.error(f"Failed to close position: {e}")
+                logger.error(f"Failed to close position on exchange: {e}")
+                logger.error("Position state preserved - manual intervention may be required")
+                exchange_close_success = False
+                # Notify about failed close
+                if self.discord:
+                    await self.discord.send_message(
+                        title="CRITICAL: Position Close Failed",
+                        message=f"Failed to close {self.config.symbol} position.\n"
+                                f"Error: {e}\n"
+                                f"Manual intervention required!",
+                        color=0xFF0000
+                    )
 
-        # Update stats
-        if is_win:
-            self.stats["trades_won"] += 1
+        # Only update local state if exchange close succeeded (or paper trading)
+        if exchange_close_success:
+            # Update stats
+            if is_win:
+                self.stats["trades_won"] += 1
+            else:
+                self.stats["trades_lost"] += 1
+
+            self.stats["total_pnl"] += pnl
+
+            # Remove position from heat tracker
+            self.risk_manager.remove_position(self.config.symbol)
+            logger.debug(f"Removed position from heat tracker: {self.config.symbol}")
+
+            # Persist heat state
+            heat_state_path = project_root / "data" / "heat_state.json"
+            self.risk_manager.save_state(str(heat_state_path))
+
+            # Clear active trade
+            self.active_trade = None
+            self.state = BotState.MONITORING
         else:
-            self.stats["trades_lost"] += 1
-
-        self.stats["total_pnl"] += pnl
-
-        # Remove position from heat tracker
-        self.risk_manager.remove_position(self.config.symbol)
-        logger.debug(f"Removed position from heat tracker: {self.config.symbol}")
-
-        # Clear active trade
-        self.active_trade = None
-        self.state = BotState.MONITORING
+            # Keep position tracked, will retry on next check cycle
+            logger.warning("Keeping position in local state - will retry close on next cycle")
 
         logger.info(
             f"Stats: {self.stats['trades_won']}W/{self.stats['trades_lost']}L | "

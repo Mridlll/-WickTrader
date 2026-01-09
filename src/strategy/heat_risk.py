@@ -5,10 +5,11 @@ Position sizing is dynamically adjusted based on current heat level.
 """
 
 import sys
+import json
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 # Add project root and src to path for imports
@@ -541,6 +542,91 @@ class HeatRiskManager(RiskManager):
                 for p in self._positions
             ]
         }
+
+    def save_state(self, filepath: str) -> bool:
+        """
+        Save heat state to file for persistence across restarts.
+
+        Args:
+            filepath: Path to save state file
+
+        Returns:
+            True if saved successfully
+        """
+        try:
+            state = {
+                "equity": self._equity,
+                "peak_equity": self._peak_equity,
+                "recovery_mode": self._recovery_mode,
+                "positions": [
+                    {
+                        "symbol": p.symbol,
+                        "side": p.side,
+                        "entry_price": p.entry_price,
+                        "current_price": p.current_price,
+                        "size": p.size,
+                        "stop_loss": p.stop_loss,
+                        "risk_amount": p.risk_amount,
+                        "heat_contribution": p.heat_contribution,
+                        "unrealized_pnl": p.unrealized_pnl
+                    }
+                    for p in self._positions
+                ],
+                "saved_at": datetime.now().isoformat()
+            }
+
+            path = Path(filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(path, 'w') as f:
+                json.dump(state, f, indent=2)
+
+            return True
+        except Exception as e:
+            # Log error but don't fail - persistence is optional
+            return False
+
+    def load_state(self, filepath: str) -> bool:
+        """
+        Load heat state from file.
+
+        Args:
+            filepath: Path to state file
+
+        Returns:
+            True if loaded successfully
+        """
+        try:
+            path = Path(filepath)
+            if not path.exists():
+                return False
+
+            with open(path, 'r') as f:
+                state = json.load(f)
+
+            self._equity = state.get("equity", 0.0)
+            self._peak_equity = state.get("peak_equity", 0.0)
+            self._recovery_mode = state.get("recovery_mode", False)
+
+            # Restore positions
+            self._positions = []
+            for p in state.get("positions", []):
+                self._positions.append(PositionHeat(
+                    symbol=p.get("symbol", ""),
+                    side=p.get("side", ""),
+                    entry_price=p.get("entry_price", 0.0),
+                    current_price=p.get("current_price", 0.0),
+                    size=p.get("size", 0.0),
+                    stop_loss=p.get("stop_loss", 0.0),
+                    risk_amount=p.get("risk_amount", 0.0),
+                    heat_contribution=p.get("heat_contribution", 0.0),
+                    unrealized_pnl=p.get("unrealized_pnl", 0.0)
+                ))
+
+            return True
+        except Exception as e:
+            # Log error but don't fail - will start fresh
+            return False
 
 
 # Preset configurations for different risk profiles

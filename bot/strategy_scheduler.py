@@ -13,7 +13,7 @@ Usage:
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -243,24 +243,24 @@ class StrategyScheduler:
         else:
             return start_minutes <= current_minutes < end_minutes
 
-    def _get_current_time(self, timezone: str) -> datetime:
+    def _get_current_time(self, tz_name: str) -> datetime:
         """Get current time in specified timezone.
 
         Args:
-            timezone: Timezone name (e.g., "UTC", "US/Eastern")
+            tz_name: Timezone name (e.g., "UTC", "US/Eastern")
 
         Returns:
             Current datetime in the timezone
         """
-        if HAS_PYTZ and timezone != "UTC":
+        if HAS_PYTZ and tz_name != "UTC":
             try:
-                tz = pytz.timezone(timezone)
+                tz = pytz.timezone(tz_name)
                 return datetime.now(tz)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Invalid timezone '{tz_name}': {e} - falling back to UTC")
 
         # Fall back to UTC
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
     def get_schedule_status(self) -> Dict[str, Any]:
         """Get current schedule status.
@@ -293,7 +293,7 @@ class StrategyScheduler:
     def print_schedule_status(self) -> None:
         """Print formatted schedule status."""
         status = self.get_schedule_status()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         print("\n  SCHEDULE STATUS")
         print("  " + "-" * 50)

@@ -1,7 +1,7 @@
 """Hyperliquid exchange implementation."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 import json
 
@@ -154,7 +154,7 @@ class HyperliquidExchange(BaseExchange):
 
             # Calculate time range
             if end_time is None:
-                end_time = datetime.utcnow()
+                end_time = datetime.now(timezone.utc)
             if start_time is None:
                 # Estimate start time based on limit and timeframe
                 hours_per_candle = self._timeframe_to_hours(timeframe)
@@ -439,7 +439,7 @@ class HyperliquidExchange(BaseExchange):
                     status=OrderStatus.FILLED if is_filled else OrderStatus.OPEN,
                     filled_size=size if is_filled else 0,
                     avg_fill_price=fill_price,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                     stop_loss=stop_loss,
                     take_profit=take_profit,
                     reduce_only=reduce_only,

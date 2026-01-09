@@ -1,7 +1,7 @@
 """Discord webhook notifications for WickTrader."""
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 import aiohttp
 
@@ -164,7 +164,7 @@ class DiscordNotifier:
                 {"name": "Take Profit", "value": f"${data.get('take_profit', 0):,.2f}", "inline": True},
                 {"name": "Heat Zone", "value": data.get("heat_zone", "GREEN"), "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": f"{self.bot_name} | Wick Strategy"}
         }
 
@@ -192,7 +192,7 @@ class DiscordNotifier:
                 {"name": "Heat Zone", "value": data.get("heat_zone", "GREEN"), "inline": True},
                 {"name": "Leverage", "value": f"{data.get('leverage', 1)}x", "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -220,7 +220,7 @@ class DiscordNotifier:
                 {"name": "PnL %", "value": f"{pnl_pct:+.2f}%", "inline": True},
                 {"name": "Exchange", "value": data.get("exchange", "N/A"), "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -238,7 +238,7 @@ class DiscordNotifier:
             "fields": [
                 {"name": "Component", "value": data.get("component", "Unknown"), "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -258,7 +258,7 @@ class DiscordNotifier:
                 {"name": "Mode", "value": "PAPER" if data.get("paper_trade") else "LIVE", "inline": True},
                 {"name": "Balance", "value": f"${data.get('balance', 0):,.2f}", "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -275,7 +275,7 @@ class DiscordNotifier:
                 {"name": "Trades", "value": str(data.get("trades_taken", 0)), "inline": True},
                 {"name": "Total PnL", "value": f"${data.get('total_pnl', 0):+,.2f}", "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -300,7 +300,7 @@ class DiscordNotifier:
                 {"name": "Total PnL", "value": f"${pnl:+,.2f}", "inline": True},
                 {"name": "Balance", "value": f"${data.get('balance', 0):,.2f}", "inline": True},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -325,7 +325,7 @@ class DiscordNotifier:
                 {"name": "Position Scale", "value": f"{data.get('scale', 100):.0f}%", "inline": True},
             ],
             "description": data.get("message", "Heat level changed"),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
@@ -341,7 +341,7 @@ class DiscordNotifier:
                 {"name": "To", "value": data.get("to_exchange", "N/A"), "inline": True},
                 {"name": "Reason", "value": data.get("reason", "Error"), "inline": False},
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "footer": {"text": self.bot_name}
         }
 
