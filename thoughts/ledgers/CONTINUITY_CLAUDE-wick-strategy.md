@@ -105,7 +105,8 @@ Win Rate:        80%
   - [x] Update README with honest performance data
   - [x] Push corrections to GitHub (commit f5d46dc)
   - [x] Verify bot supports SHORT strategies correctly
-- Now: [→] Paper trading with verified strategy settings
+  - [x] Restart production runner with correct strategy (4% SHORT)
+- Now: [→] Paper trading with verified strategy settings (RUNNING)
 - Next: Deploy to client
 
 ## GitHub
@@ -136,6 +137,17 @@ https://github.com/Mridlll/-WickTrader
 | Commit | Description |
 |--------|-------------|
 | f5d46dc | fix: Replace fake backtest results with real verified data |
+| 7074e4e | docs: Update ledger with bot verification and commit history |
+
+## CURRENT BOT STATUS (2026-01-09 11:55)
+```
+Strategy:       backtest-winner
+Direction:      SHORT (4% upper wick)
+Exit:           Fixed 15% TP
+Risk Profile:   Conservative (3% risk, 3X leverage)
+Mode:           PAPER (Testnet)
+Status:         RUNNING
+```
 
 ## BOT STRATEGY VERIFICATION
 The bot correctly supports all strategies:
