@@ -522,10 +522,59 @@ Examples:
         action='store_true',
         help='Reset runner state'
     )
+    parser.add_argument(
+        '--multi',
+        action='store_true',
+        help='Run multiple strategies from config file'
+    )
+    parser.add_argument(
+        '--config', '-c',
+        type=str,
+        default='config/strategies.yaml',
+        help='Config file for multi-strategy mode (default: config/strategies.yaml)'
+    )
 
     args = parser.parse_args()
 
-    # Create runner
+    # Multi-strategy mode
+    if args.multi:
+        from bot.multi_strategy_runner import MultiStrategyRunner
+
+        config_path = project_root / args.config
+        if not config_path.exists():
+            logger.error(f"Config file not found: {config_path}")
+            sys.exit(1)
+
+        logger.info("=" * 60)
+        logger.info("  PRODUCTION MULTI-STRATEGY MODE")
+        logger.info("=" * 60)
+        logger.info(f"Config: {config_path}")
+
+        runner = MultiStrategyRunner(str(config_path))
+
+        # Run with auto-restart on crash
+        max_restarts = args.max_restarts
+        restart_count = 0
+
+        while restart_count < max_restarts:
+            try:
+                asyncio.run(runner.start_all())
+                break  # Clean exit
+            except KeyboardInterrupt:
+                logger.info("Interrupted by user")
+                break
+            except Exception as e:
+                restart_count += 1
+                logger.error(f"Multi-strategy runner crashed: {e}")
+                logger.info(f"Restart {restart_count}/{max_restarts} in 30 seconds...")
+                if restart_count < max_restarts:
+                    time.sleep(30)
+                    # Reload runner
+                    runner = MultiStrategyRunner(str(config_path))
+
+        sys.exit(0)
+
+    # Single strategy mode
     runner = ProductionRunner(
         strategy=args.strategy,
         max_restarts=args.max_restarts,
