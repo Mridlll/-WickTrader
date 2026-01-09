@@ -113,8 +113,9 @@ Win Rate:        80%
 https://github.com/Mridlll/-WickTrader
 
 ## VERIFIED REPORTS
-- `reports/REAL_BACKTEST_REPORT_20260109_013435.md`
-- `reports/REAL_grid_search_20260109_013435.csv`
+- `reports/REAL_BACKTEST_REPORT_20260109_013435.md` - Summary report
+- `reports/REAL_grid_search_20260109_013435.csv` - Full 864-variant results
+- `reports/COMPREHENSIVE_BACKTEST_REPORT.md` - Detailed report with trade logs, methodology, top 20 strategies
 
 ## Client Spec vs Reality
 
@@ -138,6 +139,8 @@ https://github.com/Mridlll/-WickTrader
 |--------|-------------|
 | f5d46dc | fix: Replace fake backtest results with real verified data |
 | 7074e4e | docs: Update ledger with bot verification and commit history |
+| c50321c | docs: Update ledger - bot restarted with correct 4% SHORT strategy |
+| PENDING | docs: Add comprehensive backtest report with trade logs |
 
 ## CURRENT BOT STATUS (2026-01-09 11:55)
 ```
