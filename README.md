@@ -8,38 +8,115 @@
 
 ---
 
-## Quick Start (5 Minutes)
+## QUICK START - READ THIS FIRST
 
-### 1. Install
+### Prerequisites
+
+- **Python 3.10+** installed ([Download Python](https://www.python.org/downloads/))
+- **Git** installed ([Download Git](https://git-scm.com/downloads))
+- **Binance** or **Bybit** account with API keys
+
+---
+
+## Step-by-Step Setup (Follow EXACTLY)
+
+### STEP 1: Download the Bot
+
+Open **PowerShell** (Windows) or **Terminal** (Mac/Linux) and run:
 
 ```bash
 git clone https://github.com/Mridlll/-WickTrader.git
 cd WickTrader
+```
+
+### STEP 2: Install Dependencies (REQUIRED!)
+
+**YOU MUST RUN THIS COMMAND** or you will get errors:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure API Keys
+Wait for it to finish. You should see "Successfully installed..." messages.
 
-Edit `config/binance_testnet.yaml`:
-```yaml
-exchange:
-  name: "binance"
-  testnet: true
-  base_url: "https://demo-fapi.binance.com"
-  api_key: "YOUR_API_KEY"
-  api_secret: "YOUR_API_SECRET"
-```
-
-Get demo keys from: https://www.binance.com/en/futures (Demo Trading)
-
-### 3. Run the Bot
+### STEP 3: Run the Setup Wizard
 
 ```bash
-# View available strategies
+python setup_subaccounts.py
+```
+
+The wizard will ask you:
+1. **Select Exchange**: Choose `1` for Binance or `2` for Bybit
+2. **Select Strategies**: Enter numbers like `1,2` or type `all`
+3. **Enter API Keys**: Paste your API key and secret
+
+### STEP 4: Run the Bot
+
+```bash
+python run_production.py --multi
+```
+
+That's it! The bot is now running.
+
+---
+
+## Troubleshooting
+
+### Error: `No module named 'yaml'`
+Run: `pip install pyyaml`
+
+### Error: `No module named 'xxx'`
+Run: `pip install -r requirements.txt`
+
+### Error: `python is not recognized`
+Python is not installed. Download from: https://www.python.org/downloads/
+
+### Error: `git is not recognized`
+Git is not installed. Download from: https://git-scm.com/downloads
+
+---
+
+## Supported Exchanges
+
+| Exchange | Testnet | Mainnet |
+|----------|---------|---------|
+| **Binance Futures** | Yes | Yes |
+| **Bybit Perpetuals** | Yes | Yes |
+
+---
+
+## Available Strategies (10 Total)
+
+| Strategy | Direction | Trades/Year | Win Rate | Return | Max DD |
+|----------|-----------|-------------|----------|--------|--------|
+| backtest-winner | SHORT | 5 | 80% | +49.5% | 10.6% |
+| safe | LONG | 8 | 62.5% | +27.7% | 20% |
+| aggressive | SHORT | 5 | 80% | +216% | 29.5% |
+| degen | SHORT | 5 | 80% | +380% | 39.6% |
+| long-aggressive | LONG | 8 | 62.5% | +80% | 56% |
+| both-conservative | BOTH | 14 | 50% | +71% | 27.5% |
+| both-moderate | BOTH | 14 | 50% | +121% | 40% |
+| both-aggressive | BOTH | 14 | 50% | +226% | 63% |
+| both-degen | BOTH | 14 | 50% | +266% | 78% |
+| active-trader | BOTH | 16 | 50% | +94% | 40% |
+
+---
+
+## Commands Reference
+
+```bash
+# Setup wizard (first time)
+python setup_subaccounts.py
+
+# Run bot (production mode with auto-restart)
+python run_production.py --multi
+
+# View all strategies
 python -m bot.run_bot --strategies
 
-# Run with recommended strategy (paper trading - safe)
-python -m bot.run_bot --strategy backtest-winner
+# Run single strategy
+python -m bot.run_bot --strategy backtest-winner --exchange binance
+python -m bot.run_bot --strategy safe --exchange bybit
 ```
 
 ---
