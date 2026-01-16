@@ -154,7 +154,6 @@ timeout 60 python -m bot.run_bot --strategy backtest-winner
 |------|---------|
 | `reports/COMPREHENSIVE_BACKTEST_REPORT.md` | Full backtest methodology, top 20 strategies, trade logs |
 | `reports/REAL_grid_search_*.csv` | Complete 864-variant results |
-| `thoughts/ledgers/CONTINUITY_CLAUDE-wick-strategy.md` | Development history |
 
 ---
 
