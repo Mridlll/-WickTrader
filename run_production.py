@@ -340,10 +340,6 @@ class ProductionRunner:
                 exchange_type=self.exchange_type
             )
 
-            # Add heartbeat to bot
-            self.bot._heartbeat_file = Path("data/heartbeat.txt")
-            self.bot._update_heartbeat = lambda: self._update_heartbeat()
-
             # Notify startup
             if self.discord:
                 await self.discord.send_message(

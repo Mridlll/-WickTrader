@@ -221,6 +221,8 @@ def apply_strategy_preset(config: BotConfig, preset_name: str) -> BotConfig:
         print_strategy_menu()
         raise ValueError(f"Unknown strategy preset: {preset_name}")
 
+    logger.info(f"Applying strategy preset: {preset_name} (overrides YAML config values)")
+
     preset = STRATEGY_PRESETS[preset_name]
     settings = preset['settings']
 

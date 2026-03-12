@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import hmac
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
@@ -290,7 +290,7 @@ class BinanceExchange(BaseExchange):
         candles = []
         for item in data:
             candle = Candle(
-                timestamp=datetime.fromtimestamp(item[0] / 1000),
+                timestamp=datetime.fromtimestamp(item[0] / 1000, tz=timezone.utc),
                 open=float(item[1]),
                 high=float(item[2]),
                 low=float(item[3]),
@@ -333,7 +333,7 @@ class BinanceExchange(BaseExchange):
             "quote_volume_24h": float(data["quoteVolume"]),
             "price_change_24h": float(data["priceChange"]),
             "price_change_percent_24h": float(data["priceChangePercent"]),
-            "timestamp": datetime.fromtimestamp(data["closeTime"] / 1000)
+            "timestamp": datetime.fromtimestamp(data["closeTime"] / 1000, tz=timezone.utc)
         }
 
     async def get_symbol_info(self, symbol: str) -> SymbolInfo:
@@ -514,8 +514,8 @@ class BinanceExchange(BaseExchange):
             status=self._parse_order_status(data["status"]),
             filled_size=float(data["executedQty"]),
             avg_fill_price=float(data["avgPrice"]) if data.get("avgPrice") else None,
-            created_at=datetime.fromtimestamp(data["time"] / 1000) if data.get("time") else None,
-            updated_at=datetime.fromtimestamp(data["updateTime"] / 1000) if data.get("updateTime") else None,
+            created_at=datetime.fromtimestamp(data["time"] / 1000, tz=timezone.utc) if data.get("time") else None,
+            updated_at=datetime.fromtimestamp(data["updateTime"] / 1000, tz=timezone.utc) if data.get("updateTime") else None,
             reduce_only=data.get("reduceOnly", False),
             client_order_id=data.get("clientOrderId")
         )
